@@ -12,11 +12,13 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import com.linetra.permwatch.ui.AppScaffold
+import com.linetra.permwatch.ui.Intro
 import com.linetra.permwatch.ui.MainViewModel
 import com.linetra.permwatch.ui.theme.LocalHolo
 import com.linetra.permwatch.ui.theme.PermWatchTheme
@@ -36,6 +38,13 @@ class MainActivity : ComponentActivity() {
         startActivity(intent)
     }
 
+    private fun activateOnboarding() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            postNotifLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+        vm.activate()
+    }
+
     override fun onResume() {
         super.onResume()
         vm.refresh()
@@ -44,25 +53,29 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            postNotifLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-        }
         setContent {
             PermWatchTheme {
-                val state by vm.state.collectAsState()
-                androidx.compose.foundation.layout.Box(
+                val onboarded by vm.onboarded.collectAsState()
+                Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .background(LocalHolo.current.bg),
                 ) {
-                    AppScaffold(
-                        state = state,
-                        onRescan = { vm.refresh() },
-                        onAcceptApp = { pkg -> vm.acceptApp(pkg) },
-                        onAcceptAll = { vm.acceptAll() },
-                        onToggleIgnore = { pkg, ignored -> vm.toggleIgnore(pkg, ignored) },
-                        onManage = { pkg -> openAppDetailsSettings(pkg) },
-                    )
+                    when (onboarded) {
+                        null -> Unit  // splash — palette bg only, prevents intro/scaffold flash
+                        false -> Intro(onActivate = ::activateOnboarding)
+                        true -> {
+                            val state by vm.state.collectAsState()
+                            AppScaffold(
+                                state = state,
+                                onRescan = { vm.refresh() },
+                                onAcceptApp = { pkg -> vm.acceptApp(pkg) },
+                                onAcceptAll = { vm.acceptAll() },
+                                onToggleIgnore = { pkg, ignored -> vm.toggleIgnore(pkg, ignored) },
+                                onManage = { pkg -> openAppDetailsSettings(pkg) },
+                            )
+                        }
+                    }
                 }
             }
         }

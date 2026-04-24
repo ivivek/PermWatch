@@ -11,8 +11,11 @@ import com.linetra.permwatch.scanner.PermissionScanner
 import com.linetra.permwatch.worker.ScanScheduler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -43,21 +46,19 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     private val _state = MutableStateFlow(UiState())
     val state: StateFlow<UiState> = _state.asStateFlow()
 
+    /** null until the DataStore has emitted at least once, so the UI can render a splash
+     *  rather than briefly flashing the wrong screen on cold start. */
+    val onboarded: StateFlow<Boolean?> = store.onboarded
+        .map<Boolean, Boolean?> { it }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
     fun refresh() {
         viewModelScope.launch {
+            if (!store.isOnboarded()) return@launch
             _state.value = _state.value.copy(loading = true)
             val apps = withContext(Dispatchers.IO) { scanner.scanAll() }
 
-            // First run: silently baseline the current state so existing perms don't all look
-            // like fresh alerts.
-            val grantsNow = AlertDiff.currentGrantsMap(apps)
-            if (!store.isOnboarded()) {
-                store.acceptCurrentAsBaseline(grantsNow)
-                store.setOnboarded(true)
-                ScanScheduler.ensureScheduled(getApplication())
-            } else {
-                store.pruneBaselineToCurrent(grantsNow)
-            }
+            store.pruneBaselineToCurrent(AlertDiff.currentGrantsMap(apps))
 
             val baseline = store.currentBaseline()
             val ignored = store.currentIgnored()
@@ -66,6 +67,18 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 rows = toRows(apps, baseline, ignored),
             )
             updateNotification(apps, baseline, ignored)
+        }
+    }
+
+    /** Called from the Intro screen's "Activate" button. Snapshots current grants as the
+     *  baseline, schedules the worker, flips the onboarded flag, and renders the first scan. */
+    fun activate() {
+        viewModelScope.launch {
+            val apps = withContext(Dispatchers.IO) { scanner.scanAll() }
+            store.acceptCurrentAsBaseline(AlertDiff.currentGrantsMap(apps))
+            ScanScheduler.ensureScheduled(getApplication())
+            store.setOnboarded(true)
+            refresh()
         }
     }
 
