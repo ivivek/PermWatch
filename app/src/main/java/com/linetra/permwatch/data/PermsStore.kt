@@ -54,6 +54,23 @@ class PermsStore(context: Context) {
         }
     }
 
+    /**
+     * Drop revoked perms and uninstalled packages from the baseline. Run after each scan so a
+     * later re-grant counts as new (the perm has left the baseline).
+     */
+    suspend fun pruneBaselineToCurrent(current: Map<String, Set<String>>) {
+        ds.edit {
+            val pruned = decodePkgPermMap(it[KEY_BASELINE])
+                .mapNotNull { (pkg, perms) ->
+                    val now = current[pkg] ?: return@mapNotNull null
+                    val intersected = perms intersect now
+                    if (intersected.isEmpty()) null else pkg to intersected
+                }
+                .toMap()
+            it[KEY_BASELINE] = encodePkgPermMap(pruned)
+        }
+    }
+
     suspend fun setIgnored(pkg: String, ignored: Boolean) {
         ds.edit {
             val set = decodeSet(it[KEY_IGNORED]).toMutableSet()

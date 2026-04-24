@@ -50,10 +50,13 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
             // First run: silently baseline the current state so existing perms don't all look
             // like fresh alerts.
+            val grantsNow = AlertDiff.currentGrantsMap(apps)
             if (!store.isOnboarded()) {
-                store.acceptCurrentAsBaseline(AlertDiff.currentGrantsMap(apps))
+                store.acceptCurrentAsBaseline(grantsNow)
                 store.setOnboarded(true)
                 ScanScheduler.ensureScheduled(getApplication())
+            } else {
+                store.pruneBaselineToCurrent(grantsNow)
             }
 
             val baseline = store.currentBaseline()
