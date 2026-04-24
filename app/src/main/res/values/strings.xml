@@ -8,11 +8,7 @@
     <string name="summary_title">Sensitive permissions granted</string>
     <string name="summary_none">No watched apps have sensitive permissions</string>
 
-    <string name="onboarding_title">Watch which apps?</string>
-    <string name="onboarding_subtitle">Pick apps you want alerted about when they gain sensitive permissions. You can change this later.</string>
-    <string name="action_done">Done</string>
     <string name="action_rescan">Rescan now</string>
-    <string name="action_enable_notifs">Enable notifications</string>
 
     <string name="cat_sms_contacts">SMS, Contacts, Call log, Phone</string>
     <string name="cat_mic_camera">Microphone &amp; Camera</string>

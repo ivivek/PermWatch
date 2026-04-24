@@ -29,7 +29,6 @@ data class AppRow(
 
 data class UiState(
     val loading: Boolean = true,
-    val onboarded: Boolean = false,
     val rows: List<AppRow> = emptyList(),
 ) {
     val alertCount: Int get() = rows.count { it.hasAlert }
@@ -48,30 +47,22 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             _state.value = _state.value.copy(loading = true)
             val apps = withContext(Dispatchers.IO) { scanner.scanAll() }
-            val onboarded = store.isOnboarded()
+
+            // First run: silently baseline the current state so existing perms don't all look
+            // like fresh alerts.
+            if (!store.isOnboarded()) {
+                store.acceptCurrentAsBaseline(AlertDiff.currentGrantsMap(apps))
+                store.setOnboarded(true)
+                ScanScheduler.ensureScheduled(getApplication())
+            }
+
             val baseline = store.currentBaseline()
             val ignored = store.currentIgnored()
             _state.value = UiState(
                 loading = false,
-                onboarded = onboarded,
                 rows = toRows(apps, baseline, ignored),
             )
-            if (onboarded) updateNotification(apps, baseline, ignored)
-        }
-    }
-
-    fun completeOnboarding() {
-        viewModelScope.launch {
-            val apps = withContext(Dispatchers.IO) { scanner.scanAll() }
-            val current = AlertDiff.currentGrantsMap(apps)
-            store.acceptCurrentAsBaseline(current)
-            store.setOnboarded(true)
-            ScanScheduler.ensureScheduled(getApplication())
-            _state.value = _state.value.copy(
-                onboarded = true,
-                rows = toRows(apps, current, store.currentIgnored()),
-            )
-            notifier.cancelSummary()
+            updateNotification(apps, baseline, ignored)
         }
     }
 

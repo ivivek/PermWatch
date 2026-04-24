@@ -57,7 +57,6 @@ class MainActivity : ComponentActivity() {
                     AppScaffold(
                         state = state,
                         onRescan = { vm.refresh() },
-                        onCompleteOnboarding = { vm.completeOnboarding() },
                         onAcceptApp = { pkg -> vm.acceptApp(pkg) },
                         onAcceptAll = { vm.acceptAll() },
                         onToggleIgnore = { pkg, ignored -> vm.toggleIgnore(pkg, ignored) },

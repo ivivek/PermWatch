@@ -18,7 +18,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -58,7 +57,6 @@ private enum class Tab(val label: String) { User("User"), System("System") }
 fun AppScaffold(
     state: UiState,
     onRescan: () -> Unit,
-    onCompleteOnboarding: () -> Unit,
     onAcceptApp: (String) -> Unit,
     onAcceptAll: () -> Unit,
     onToggleIgnore: (String, Boolean) -> Unit,
@@ -79,10 +77,10 @@ fun AppScaffold(
             )
         },
     ) { padding ->
-        when {
-            state.loading -> LoadingView(padding)
-            !state.onboarded -> OnboardingView(padding, state, onCompleteOnboarding)
-            else -> AppListWithTabs(
+        if (state.loading) {
+            LoadingView(padding)
+        } else {
+            AppListWithTabs(
                 padding = padding,
                 state = state,
                 onAcceptApp = onAcceptApp,
@@ -98,45 +96,6 @@ fun AppScaffold(
 private fun LoadingView(padding: PaddingValues) {
     Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
         CircularProgressIndicator()
-    }
-}
-
-@Composable
-private fun OnboardingView(
-    padding: PaddingValues,
-    state: UiState,
-    onComplete: () -> Unit,
-) {
-    Column(
-        Modifier.fillMaxSize().padding(padding).padding(20.dp),
-    ) {
-        Text(
-            stringResource(R.string.onboarding_title),
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.SemiBold,
-        )
-        Spacer(Modifier.height(8.dp))
-        Text(
-            stringResource(R.string.onboarding_subtitle),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(Modifier.height(16.dp))
-        Text(
-            "${state.rows.size} apps currently have sensitive permissions",
-            style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.Medium,
-        )
-        Spacer(Modifier.height(16.dp))
-        LazyColumn(Modifier.weight(1f)) {
-            items(state.rows, key = { it.packageName }) { row ->
-                AppCard(row = row, onAccept = {}, onToggleIgnore = {}, onManage = {}, showActions = false)
-                Spacer(Modifier.height(8.dp))
-            }
-        }
-        Button(onClick = onComplete, modifier = Modifier.fillMaxWidth()) {
-            Text("Accept current state & start monitoring")
-        }
     }
 }
 
