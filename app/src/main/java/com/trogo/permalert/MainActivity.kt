@@ -18,7 +18,6 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -41,6 +40,11 @@ class MainActivity : ComponentActivity() {
         startActivity(intent)
     }
 
+    override fun onResume() {
+        super.onResume()
+        vm.refresh()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -50,7 +54,6 @@ class MainActivity : ComponentActivity() {
             PermalertTheme {
                 Surface(modifier = Modifier, color = MaterialTheme.colorScheme.background) {
                     val state by vm.state.collectAsState()
-                    LaunchedEffect(Unit) { vm.refresh() }
                     AppScaffold(
                         state = state,
                         onRescan = { vm.refresh() },

@@ -44,10 +44,6 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     private val _state = MutableStateFlow(UiState())
     val state: StateFlow<UiState> = _state.asStateFlow()
 
-    init {
-        refresh()
-    }
-
     fun refresh() {
         viewModelScope.launch {
             _state.value = _state.value.copy(loading = true)
