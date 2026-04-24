@@ -8,22 +8,18 @@ import android.os.Bundle
 import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.runtime.Composable
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import com.linetra.permwatch.ui.AppScaffold
 import com.linetra.permwatch.ui.MainViewModel
+import com.linetra.permwatch.ui.theme.LocalHolo
+import com.linetra.permwatch.ui.theme.PermWatchTheme
 
 class MainActivity : ComponentActivity() {
 
@@ -47,13 +43,18 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             postNotifLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
         setContent {
             PermWatchTheme {
-                Surface(modifier = Modifier, color = MaterialTheme.colorScheme.background) {
-                    val state by vm.state.collectAsState()
+                val state by vm.state.collectAsState()
+                androidx.compose.foundation.layout.Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(LocalHolo.current.bg),
+                ) {
                     AppScaffold(
                         state = state,
                         onRescan = { vm.refresh() },
@@ -66,16 +67,4 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-}
-
-@Composable
-private fun PermWatchTheme(content: @Composable () -> Unit) {
-    val dark = isSystemInDarkTheme()
-    val context = LocalContext.current
-    val scheme = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        if (dark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-    } else {
-        if (dark) darkColorScheme() else lightColorScheme()
-    }
-    MaterialTheme(colorScheme = scheme, content = content)
 }

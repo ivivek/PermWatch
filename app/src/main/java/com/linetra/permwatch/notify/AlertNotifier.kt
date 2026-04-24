@@ -44,18 +44,18 @@ class AlertNotifier(private val context: Context) {
 
         val title = context.resources.getQuantityStringCompat(
             flagged.size,
-            "%d app has new sensitive permissions",
-            "%d apps have new sensitive permissions",
+            "%d app has new access",
+            "%d apps have new access",
         )
 
-        val inbox = NotificationCompat.InboxStyle().setBigContentTitle(title)
+        val inbox = NotificationCompat.InboxStyle()
+            .setBigContentTitle(title)
+            .setSummaryText("Signal · since baseline")
         flagged.take(MAX_LINES).forEach { app ->
             val perms = app.newPerms.joinToString(", ") { SensitivePermissions.labelFor(it) }
             inbox.addLine("${app.label}: $perms")
         }
-        if (flagged.size > MAX_LINES) {
-            inbox.setSummaryText("+${flagged.size - MAX_LINES} more")
-        }
+        val moreSuffix = if (flagged.size > MAX_LINES) "  · +${flagged.size - MAX_LINES} more" else ""
 
         val openIntent = Intent(context, MainActivity::class.java).apply {
             addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
@@ -67,10 +67,15 @@ class AlertNotifier(private val context: Context) {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
 
+        val firstLine = flagged.firstOrNull()?.let {
+            "${it.label}: ${it.newPerms.joinToString(", ") { p -> SensitivePermissions.labelFor(p) }}"
+        } ?: ""
+
         val notif = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_stat_shield)
+            .setSmallIcon(R.drawable.ic_stat_iris)
             .setContentTitle(title)
-            .setContentText(context.getString(R.string.app_name))
+            .setContentText(firstLine + moreSuffix)
+            .setSubText("Signal · since baseline")
             .setStyle(inbox)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
