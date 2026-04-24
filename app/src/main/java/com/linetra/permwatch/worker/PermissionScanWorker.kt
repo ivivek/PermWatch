@@ -33,7 +33,9 @@ class PermissionScanWorker(
 
         val notifier = AlertNotifier(ctx)
         notifier.ensureChannel()
-        notifier.updateSummary(flagged)
+        val previousCount = store.currentLastAlertCount()
+        notifier.updateSummary(flagged, previousCount)
+        store.setLastAlertCount(flagged.size)
 
         ScanScheduler.scheduleNext(ctx)
         return Result.success()

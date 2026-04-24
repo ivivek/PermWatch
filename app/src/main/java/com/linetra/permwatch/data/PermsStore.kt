@@ -5,6 +5,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
@@ -33,6 +34,12 @@ class PermsStore(context: Context) {
     suspend fun currentBaseline(): Map<String, Set<String>> = baseline.first()
     suspend fun currentIgnored(): Set<String> = ignored.first()
     suspend fun isOnboarded(): Boolean = onboarded.first()
+
+    val lastAlertCount: Flow<Int> = ds.data.map { it[KEY_LAST_ALERT_COUNT] ?: 0 }
+    suspend fun currentLastAlertCount(): Int = lastAlertCount.first()
+    suspend fun setLastAlertCount(count: Int) {
+        ds.edit { it[KEY_LAST_ALERT_COUNT] = count }
+    }
 
     suspend fun setOnboarded(value: Boolean) {
         ds.edit { it[KEY_ONBOARDED] = value }
@@ -83,6 +90,7 @@ class PermsStore(context: Context) {
         private val KEY_ONBOARDED = booleanPreferencesKey("onboarded")
         private val KEY_BASELINE = stringPreferencesKey("baseline_v1")
         private val KEY_IGNORED = stringPreferencesKey("ignored_v1")
+        private val KEY_LAST_ALERT_COUNT = intPreferencesKey("last_alert_count")
 
         // Encoding: pkg|perm1,perm2\npkg2|perm3  — newlines/pipes/commas are not legal in permission names or package names
         fun encodePkgPermMap(map: Map<String, Set<String>>): String =

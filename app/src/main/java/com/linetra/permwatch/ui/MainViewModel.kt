@@ -98,8 +98,10 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         ignored: Set<String>,
     ) = withContext(Dispatchers.IO) {
         val flagged = AlertDiff.compute(apps, baseline, ignored)
+        val previousCount = store.currentLastAlertCount()
         notifier.ensureChannel()
-        notifier.updateSummary(flagged)
+        notifier.updateSummary(flagged, previousCount)
+        store.setLastAlertCount(flagged.size)
     }
 
     private fun toRows(
