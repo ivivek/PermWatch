@@ -36,16 +36,31 @@ com.linetra.permwatch
 ├── data/
 │   ├── SensitivePermissions.kt   Catalog: 23 perms across 4 categories
 │   ├── InstalledAppPerms.kt      Scanner output model
-│   ├── PermsStore.kt             DataStore ("perms") — baseline, ignored set, onboarded flag
+│   ├── PermsStore.kt             DataStore ("perms") — baseline, ignored set, onboarded
+│   │                             flag, lastAlertCount (for heads-up gating)
 │   └── AlertDiff.kt              Pure-function diff: current - baseline - ignored → FlaggedApp list
 ├── scanner/PermissionScanner.kt  PackageManager + AppOpsManager + Settings.Secure
 ├── worker/
-│   ├── PermissionScanWorker.kt   CoroutineWorker — scan + notify + schedule next
+│   ├── PermissionScanWorker.kt   CoroutineWorker — prune + scan + notify + schedule next
 │   └── ScanScheduler.kt          Self-chaining OneTimeWorkRequest wrapper
-├── notify/AlertNotifier.kt       Single persistent inbox-style summary notification
+├── notify/AlertNotifier.kt       HIGH-importance channel (perm_alerts_v2); heads-up only
+│                                 when count escalates; large Iris icon + accent tint
 └── ui/
     ├── MainViewModel.kt          AndroidViewModel — refresh/accept/ignore actions
-    └── Screens.kt                AppScaffold + AppListWithTabs + AppCard + ...
+    ├── Screens.kt                Hero + AlertStrip + Tabs + AppCard + chips + buttons
+    ├── atoms/
+    │   ├── Iris.kt               Animated sweep-gradient ring (configurable size/speed/still)
+    │   └── Glass.kt              Translucent surface + hairline border (optional gradient)
+    └── theme/
+        ├── Color.kt              HoloDark + HoloLight palettes, LocalHolo CompositionLocal
+        ├── Type.kt               Space Grotesk (variable) + IBM Plex Mono families
+        └── Theme.kt              System-following dark/light, edge-to-edge insets
+
+res/font/                         Bundled: space_grotesk_var, ibm_plex_mono_{regular,medium,bold}
+res/drawable/
+├── ic_iris_mark.xml              Full-bleed Iris on rounded violet — large icon + launcher source
+├── ic_stat_iris.xml              Monochrome ring + dot — notification small icon
+└── ic_launcher_{foreground,background}.xml   Adaptive launcher icon
 ```
 
 ## Core concepts
@@ -57,6 +72,13 @@ First run silently captures current granted sensitive perms as the baseline
 baseline. Without this, every pre-existing grant would alert at install — all
 50+ apps already using sensitive perms would swamp the UI. Everything alert-
 related in the codebase is derivation of this diff.
+
+After every scan (UI refresh + worker tick), `PermsStore.pruneBaselineToCurrent`
+intersects the stored baseline with what's actually granted now: revoked perms
+drop out, uninstalled packages drop out. So a perm the user revokes in Settings
+leaves the baseline immediately, and a later re-grant of that same perm counts
+as new and fires an alert. Without prune, the baseline only ever grew, and
+re-grants of previously-revoked perms were silently accepted.
 
 ### Scheduling
 
@@ -90,6 +112,22 @@ app's permissions. The "Manage" button on each card fires
 user revokes manually. Positioning: PermWatch is an **auditor**, not an
 enforcer. (Bouncer owns the revoke-via-accessibility-service lane.)
 
+### Notification — calm summary, loud on change
+
+A single ongoing notification (`NOTIF_ID_SUMMARY`, channel `perm_alerts_v2` at
+`IMPORTANCE_HIGH`). On every refresh `AlertNotifier.updateSummary(flagged,
+previousCount)` re-renders the body. If `flagged.size > previousCount` it first
+`cancel()`s the live notification — the next `notify()` is then treated as a
+new post and the channel's HIGH importance triggers heads-up + sound. Equal or
+lower counts use `setOnlyAlertOnce(true)` so updates land silently in the
+shade. `previousCount` lives in PermsStore as `lastAlertCount` and is written
+after each notify by both the ViewModel and the worker.
+
+Brand presence on the shade: `setLargeIcon` is fed a Bitmap rasterised from
+`ic_iris_mark.xml` (the launcher icon Android caches can be stale; explicit
+large-icon bypasses that). `setColor(0xFF8F8CFF)` tints the small icon and
+chrome with `accentC` violet.
+
 ## Manifest quirks
 
 - `QUERY_ALL_PACKAGES` — required on API 30+ to enumerate other apps' perm
@@ -99,24 +137,39 @@ enforcer. (Bouncer owns the revoke-via-accessibility-service lane.)
 - `RECEIVE_BOOT_COMPLETED` — declared but not actively used; WorkManager
   handles its own boot restore.
 
-## Design direction (v0.2 UI work)
+## Design — shipped v2 holographic
 
-- Brief: `design-brief.md` (intro + main + notification; tone = calm guardian,
-  not alarmist antivirus).
-- Two prototypes at `/opt/dev/PermWatch/`:
-  - `PermWatch.jsx` — v1, **editorial/paper** aesthetic (Instrument Serif
-    italic, Inter, JetBrains Mono; warm + amber; 4 themes inc. Material You).
-  - `PermWatch v2.jsx` — v2, **holographic/future** aesthetic (Space Grotesk +
-    IBM Plex Mono; dark violet + iridescent gradient; glassmorphism; animated
-    "Iris" mark).
-- Agreed direction: **hybrid** — adopt v2's Iris (as launcher + notification
-  glyph) and voice ("Field is quiet", "Signal · since baseline", "Got it"),
-  but keep v1's foundation (light + dark, Material You, solid surfaces,
-  Instrument Serif for the `PermWatch` wordmark). Avoids v2's dark-only,
-  minSdk-31-blur, and dating risks.
-- Fonts to bundle: Instrument Serif (italic display), Inter (UI body),
-  JetBrains Mono (metadata/package IDs).
-- OKLCH values in the prototype need converting to sRGB `Color()` for Compose.
+The shipped UI is the v2 holographic direction (deep violet + iridescent
+sweep gradient + glass surfaces + Iris mark + Space Grotesk / IBM Plex Mono).
+Both palettes ship: `HoloDark` for system dark, `HoloLight` for system light
+(designer's lifted variant — accents desaturated and darkened, glass opacity
+raised from 5–9% to 60–95% so it reads on paper). System light/dark choice
+flips the palette; same components, no branching downstream.
+
+Voice: "Field is quiet" / "Signal · since baseline" / "N apps have new
+access" / "Got it" (instead of "Accept") / "Watching" / "Ignored".
+
+Prototype source-of-truth at `/opt/dev/PermWatch/`:
+- `PermWatch v2.jsx` — dark, what HoloDark is derived from.
+- `PermWatch v2 Light.jsx` — light, what HoloLight is derived from.
+- `Moodboard.html` / `Moodboard v2.html` — alternative directions explored
+  but not shipped (Terminal, Brutalist, Nature, Newspaper, Muji, Risograph,
+  Swiss, Cozy/Mascot, Holographic).
+
+Conversion notes:
+- OKLCH values are converted to sRGB hex via the python snippet that produced
+  `Color.kt`. Re-run if palette shifts.
+- Compose has no native sweep gradient with rotation animation; `Iris.kt`
+  composes `Brush.sweepGradient` with `rememberInfiniteTransition` rotating
+  the Box.
+- Backdrop blur (the prototype's `backdrop-filter: blur`) is *not* implemented:
+  Compose `Modifier.blur()` blurs the layer's own content, not what's behind.
+  A real backdrop pass needs a separate render pipeline (background snapshot →
+  blur → composite under glass). Translucent surfaces ship without blur and
+  read fine.
+
+Fonts bundled: Space Grotesk (variable TTF from google/fonts upstream) +
+IBM Plex Mono (regular/medium/bold statics). ~547 KB total.
 
 ## Conventions
 
