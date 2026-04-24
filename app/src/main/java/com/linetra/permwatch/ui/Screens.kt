@@ -1,4 +1,4 @@
-package com.trogo.permalert.ui
+package com.linetra.permwatch.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -48,8 +48,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.trogo.permalert.R
-import com.trogo.permalert.data.SensitivePermissions
+import com.linetra.permwatch.R
+import com.linetra.permwatch.data.SensitivePermissions
 
 private enum class Tab(val label: String) { User("User"), System("System") }
 

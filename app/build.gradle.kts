@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.trogo.permalert"
+    namespace = "com.linetra.permwatch"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.trogo.permalert"
+        applicationId = "com.linetra.permwatch"
         minSdk = 26
         targetSdk = 35
         versionCode = 1

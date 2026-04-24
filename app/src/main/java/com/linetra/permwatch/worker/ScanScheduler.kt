@@ -1,4 +1,4 @@
-package com.trogo.permalert.worker
+package com.linetra.permwatch.worker
 
 import android.content.Context
 import androidx.work.ExistingWorkPolicy

@@ -1,4 +1,4 @@
-package com.trogo.permalert.data
+package com.linetra.permwatch.data
 
 import android.content.Context
 import androidx.datastore.core.DataStore

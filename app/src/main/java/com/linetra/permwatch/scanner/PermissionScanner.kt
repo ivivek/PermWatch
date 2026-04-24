@@ -1,4 +1,4 @@
-package com.trogo.permalert.scanner
+package com.linetra.permwatch.scanner
 
 import android.app.AppOpsManager
 import android.content.Context
@@ -7,8 +7,8 @@ import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.os.Build
 import android.provider.Settings
-import com.trogo.permalert.data.InstalledAppPerms
-import com.trogo.permalert.data.SensitivePermissions
+import com.linetra.permwatch.data.InstalledAppPerms
+import com.linetra.permwatch.data.SensitivePermissions
 
 class PermissionScanner(private val context: Context) {
 

@@ -1,14 +1,14 @@
-package com.trogo.permalert.ui
+package com.linetra.permwatch.ui
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.trogo.permalert.data.AlertDiff
-import com.trogo.permalert.data.InstalledAppPerms
-import com.trogo.permalert.data.PermsStore
-import com.trogo.permalert.notify.AlertNotifier
-import com.trogo.permalert.scanner.PermissionScanner
-import com.trogo.permalert.worker.ScanScheduler
+import com.linetra.permwatch.data.AlertDiff
+import com.linetra.permwatch.data.InstalledAppPerms
+import com.linetra.permwatch.data.PermsStore
+import com.linetra.permwatch.notify.AlertNotifier
+import com.linetra.permwatch.scanner.PermissionScanner
+import com.linetra.permwatch.worker.ScanScheduler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

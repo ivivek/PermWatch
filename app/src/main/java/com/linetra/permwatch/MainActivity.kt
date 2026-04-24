@@ -1,4 +1,4 @@
-package com.trogo.permalert
+package com.linetra.permwatch
 
 import android.Manifest
 import android.content.Intent
@@ -22,8 +22,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import com.trogo.permalert.ui.AppScaffold
-import com.trogo.permalert.ui.MainViewModel
+import com.linetra.permwatch.ui.AppScaffold
+import com.linetra.permwatch.ui.MainViewModel
 
 class MainActivity : ComponentActivity() {
 
@@ -51,7 +51,7 @@ class MainActivity : ComponentActivity() {
             postNotifLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
         setContent {
-            PermalertTheme {
+            PermWatchTheme {
                 Surface(modifier = Modifier, color = MaterialTheme.colorScheme.background) {
                     val state by vm.state.collectAsState()
                     AppScaffold(
@@ -70,7 +70,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-private fun PermalertTheme(content: @Composable () -> Unit) {
+private fun PermWatchTheme(content: @Composable () -> Unit) {
     val dark = isSystemInDarkTheme()
     val context = LocalContext.current
     val scheme = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {

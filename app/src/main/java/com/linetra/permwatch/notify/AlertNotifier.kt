@@ -1,4 +1,4 @@
-package com.trogo.permalert.notify
+package com.linetra.permwatch.notify
 
 import android.Manifest
 import android.app.NotificationChannel
@@ -11,10 +11,10 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
-import com.trogo.permalert.MainActivity
-import com.trogo.permalert.R
-import com.trogo.permalert.data.FlaggedApp
-import com.trogo.permalert.data.SensitivePermissions
+import com.linetra.permwatch.MainActivity
+import com.linetra.permwatch.R
+import com.linetra.permwatch.data.FlaggedApp
+import com.linetra.permwatch.data.SensitivePermissions
 
 class AlertNotifier(private val context: Context) {
 

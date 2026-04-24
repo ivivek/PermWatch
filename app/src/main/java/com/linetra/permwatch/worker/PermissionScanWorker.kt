@@ -1,12 +1,12 @@
-package com.trogo.permalert.worker
+package com.linetra.permwatch.worker
 
 import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.trogo.permalert.data.AlertDiff
-import com.trogo.permalert.data.PermsStore
-import com.trogo.permalert.notify.AlertNotifier
-import com.trogo.permalert.scanner.PermissionScanner
+import com.linetra.permwatch.data.AlertDiff
+import com.linetra.permwatch.data.PermsStore
+import com.linetra.permwatch.notify.AlertNotifier
+import com.linetra.permwatch.scanner.PermissionScanner
 
 class PermissionScanWorker(
     appContext: Context,
