@@ -32,7 +32,8 @@ adb shell pm clear com.linetra.permwatch.dev
 ```
 com.linetra.permwatch
 ├── PermWatchApp.kt          Application — channel + ScanScheduler.ensureScheduled on startup
-├── MainActivity.kt           Compose single-activity; onResume triggers vm.refresh()
+├── MainActivity.kt           Compose single-activity; switches Intro/scaffold on
+│                             vm.onboarded; onResume triggers vm.refresh()
 ├── data/
 │   ├── SensitivePermissions.kt   Catalog: 23 perms across 4 categories
 │   ├── InstalledAppPerms.kt      Scanner output model
@@ -46,7 +47,8 @@ com.linetra.permwatch
 ├── notify/AlertNotifier.kt       HIGH-importance channel (perm_alerts_v2); heads-up only
 │                                 when count escalates; large Iris icon + accent tint
 └── ui/
-    ├── MainViewModel.kt          AndroidViewModel — refresh/accept/ignore actions
+    ├── MainViewModel.kt          AndroidViewModel — refresh/accept/ignore + activate
+    ├── Intro.kt                  3-slide first-run onboarding (Signal/Change/You)
     ├── Screens.kt                Hero + AlertStrip + Tabs + AppCard + chips + buttons
     ├── atoms/
     │   ├── Iris.kt               Animated sweep-gradient ring (configurable size/speed/still)
@@ -79,6 +81,20 @@ drop out, uninstalled packages drop out. So a perm the user revokes in Settings
 leaves the baseline immediately, and a later re-grant of that same perm counts
 as new and fires an alert. Without prune, the baseline only ever grew, and
 re-grants of previously-revoked perms were silently accepted.
+
+### First-run gate
+
+`MainViewModel.onboarded: StateFlow<Boolean?>` reflects the persisted flag —
+`null` until the DataStore has emitted at least once (so `MainActivity` renders
+a brief blank-on-bg splash rather than flashing the wrong screen on cold
+start), then `false` (Intro) or `true` (scaffold).
+
+`vm.refresh()` is a no-op while `!onboarded`, so onResume during the intro
+doesn't kick off a scan. The Activate button on the last Intro slide calls
+`vm.activate()`: snapshots current grants as the baseline, schedules the
+worker, flips the flag, and triggers the first refresh. POST_NOTIFICATIONS
+(API 33+) is requested from the same handler — the prompt lands when the user
+opts in, not on `onCreate`.
 
 ### Scheduling
 
