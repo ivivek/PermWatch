@@ -80,3 +80,7 @@ adb shell pm clear com.linetra.permwatch.dev
   boot restore.
 
 PermWatch does **not** request any of the sensitive permissions it watches.
+
+## License
+
+MIT — see [`LICENSE`](./LICENSE).
