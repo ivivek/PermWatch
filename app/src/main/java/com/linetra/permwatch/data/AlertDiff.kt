@@ -16,13 +16,15 @@ object AlertDiff {
         current: List<InstalledAppPerms>,
         baseline: Map<String, Set<String>>,
         ignored: Set<String>,
+        watched: Set<String>,
     ): List<FlaggedApp> {
         val flagged = mutableListOf<FlaggedApp>()
         for (app in current) {
             if (app.packageName in ignored) continue
-            if (app.grantedSensitive.isEmpty()) continue
+            val watchedGranted = app.grantedSensitive intersect watched
+            if (watchedGranted.isEmpty()) continue
             val known = baseline[app.packageName] ?: emptySet()
-            val newPerms = app.grantedSensitive - known
+            val newPerms = watchedGranted - known
             if (newPerms.isNotEmpty()) {
                 flagged += FlaggedApp(app.packageName, app.label, newPerms)
             }

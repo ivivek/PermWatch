@@ -31,8 +31,14 @@ class PermsStore(context: Context) {
     val ignored: Flow<Set<String>> =
         ds.data.map { decodeSet(it[KEY_IGNORED]) }
 
+    /** Manifest names of sensitive permissions the user has explicitly opted out of watching.
+     *  Empty by default — first-install behavior watches the full SensitivePermissions catalog. */
+    val unwatched: Flow<Set<String>> =
+        ds.data.map { decodeSet(it[KEY_UNWATCHED]) }
+
     suspend fun currentBaseline(): Map<String, Set<String>> = baseline.first()
     suspend fun currentIgnored(): Set<String> = ignored.first()
+    suspend fun currentUnwatched(): Set<String> = unwatched.first()
     suspend fun isOnboarded(): Boolean = onboarded.first()
 
     val lastAlertCount: Flow<Int> = ds.data.map { it[KEY_LAST_ALERT_COUNT] ?: 0 }
@@ -86,10 +92,33 @@ class PermsStore(context: Context) {
         }
     }
 
+    suspend fun setUnwatched(perm: String, unwatched: Boolean) {
+        ds.edit {
+            val set = decodeSet(it[KEY_UNWATCHED]).toMutableSet()
+            if (unwatched) set += perm else set -= perm
+            it[KEY_UNWATCHED] = encodeSet(set)
+        }
+    }
+
+    /** For each package whose current grants include `perm`, add `perm` to its baseline entry.
+     *  Used when re-enabling watch for a permission so existing grants don't fire as new. */
+    suspend fun mergeIntoBaseline(perm: String, current: Map<String, Set<String>>) {
+        ds.edit {
+            val map = decodePkgPermMap(it[KEY_BASELINE]).toMutableMap()
+            for ((pkg, perms) in current) {
+                if (perm in perms) {
+                    map[pkg] = (map[pkg] ?: emptySet()) + perm
+                }
+            }
+            it[KEY_BASELINE] = encodePkgPermMap(map)
+        }
+    }
+
     companion object {
         private val KEY_ONBOARDED = booleanPreferencesKey("onboarded")
         private val KEY_BASELINE = stringPreferencesKey("baseline_v1")
         private val KEY_IGNORED = stringPreferencesKey("ignored_v1")
+        private val KEY_UNWATCHED = stringPreferencesKey("unwatched_v1")
         private val KEY_LAST_ALERT_COUNT = intPreferencesKey("last_alert_count")
 
         // Encoding: pkg|perm1,perm2\npkg2|perm3  — newlines/pipes/commas are not legal in permission names or package names

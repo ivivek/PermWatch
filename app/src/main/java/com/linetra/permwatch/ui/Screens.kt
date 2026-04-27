@@ -67,6 +67,7 @@ fun AppScaffold(
     onAcceptAll: () -> Unit,
     onToggleIgnore: (String, Boolean) -> Unit,
     onManage: (String) -> Unit,
+    onOpenSettings: () -> Unit,
 ) {
     val statusBars = WindowInsets.statusBars.asPaddingValues()
     val navBars = WindowInsets.navigationBars.asPaddingValues()
@@ -76,7 +77,7 @@ fun AppScaffold(
             .fillMaxSize()
             .padding(top = statusBars.calculateTopPadding()),
     ) {
-        MainHeader(onRescan = onRescan, scanning = state.loading)
+        MainHeader(onRescan = onRescan, scanning = state.loading, onOpenSettings = onOpenSettings)
 
         if (state.loading && state.rows.isEmpty()) {
             LoadingList()
@@ -96,14 +97,15 @@ fun AppScaffold(
 // ── Header ─────────────────────────────────────────────
 
 @Composable
-private fun MainHeader(onRescan: () -> Unit, scanning: Boolean) {
+private fun MainHeader(onRescan: () -> Unit, scanning: Boolean, onOpenSettings: () -> Unit) {
     val palette = LocalHolo.current
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 22.dp, vertical = 14.dp),
+            .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        Spacer(Modifier.width(8.dp))
         Iris(size = 22.dp, speedMillis = 16_000)
         Spacer(Modifier.width(10.dp))
         Text(
@@ -132,6 +134,9 @@ private fun MainHeader(onRescan: () -> Unit, scanning: Boolean) {
                 RefreshGlyph(color = palette.ink)
             }
         }
+        IconBox(onClick = onOpenSettings) {
+            GearGlyph(color = palette.ink)
+        }
     }
 }
 
@@ -145,6 +150,36 @@ private fun IconBox(onClick: () -> Unit, content: @Composable () -> Unit) {
         contentAlignment = Alignment.Center,
         content = { content() },
     )
+}
+
+@Composable
+private fun GearGlyph(color: Color) {
+    androidx.compose.foundation.Canvas(modifier = Modifier.size(18.dp)) {
+        val stroke = androidx.compose.ui.graphics.drawscope.Stroke(
+            width = 1.3.dp.toPx(),
+            cap = androidx.compose.ui.graphics.StrokeCap.Round,
+        )
+        val w = size.width
+        val h = size.height
+        // Three horizontal sliders, each with a small filled knob at different position
+        val ys = floatArrayOf(h * 0.25f, h * 0.50f, h * 0.75f)
+        val knobX = floatArrayOf(w * 0.30f, w * 0.65f, w * 0.45f)
+        val knobR = w * 0.085f
+        for (i in 0 until 3) {
+            drawLine(
+                color = color,
+                start = androidx.compose.ui.geometry.Offset(w * 0.10f, ys[i]),
+                end = androidx.compose.ui.geometry.Offset(w * 0.90f, ys[i]),
+                strokeWidth = stroke.width,
+                cap = androidx.compose.ui.graphics.StrokeCap.Round,
+            )
+            drawCircle(
+                color = color,
+                radius = knobR,
+                center = androidx.compose.ui.geometry.Offset(knobX[i], ys[i]),
+            )
+        }
+    }
 }
 
 @Composable

@@ -7,6 +7,7 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
@@ -16,10 +17,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.linetra.permwatch.ui.AppScaffold
 import com.linetra.permwatch.ui.Intro
 import com.linetra.permwatch.ui.MainViewModel
+import com.linetra.permwatch.ui.Settings
 import com.linetra.permwatch.ui.theme.LocalHolo
 import com.linetra.permwatch.ui.theme.PermWatchTheme
 
@@ -66,14 +71,26 @@ class MainActivity : ComponentActivity() {
                         false -> Intro(onActivate = ::activateOnboarding)
                         true -> {
                             val state by vm.state.collectAsState()
-                            AppScaffold(
-                                state = state,
-                                onRescan = { vm.refresh() },
-                                onAcceptApp = { pkg -> vm.acceptApp(pkg) },
-                                onAcceptAll = { vm.acceptAll() },
-                                onToggleIgnore = { pkg, ignored -> vm.toggleIgnore(pkg, ignored) },
-                                onManage = { pkg -> openAppDetailsSettings(pkg) },
-                            )
+                            var settingsOpen by rememberSaveable { mutableStateOf(false) }
+                            if (settingsOpen) {
+                                val unwatched by vm.unwatched.collectAsState()
+                                BackHandler { settingsOpen = false }
+                                Settings(
+                                    unwatched = unwatched,
+                                    onSetWatched = { perm, watched -> vm.setWatched(perm, watched) },
+                                    onBack = { settingsOpen = false },
+                                )
+                            } else {
+                                AppScaffold(
+                                    state = state,
+                                    onRescan = { vm.refresh() },
+                                    onAcceptApp = { pkg -> vm.acceptApp(pkg) },
+                                    onAcceptAll = { vm.acceptAll() },
+                                    onToggleIgnore = { pkg, ignored -> vm.toggleIgnore(pkg, ignored) },
+                                    onManage = { pkg -> openAppDetailsSettings(pkg) },
+                                    onOpenSettings = { settingsOpen = true },
+                                )
+                            }
                         }
                     }
                 }

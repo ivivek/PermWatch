@@ -5,6 +5,7 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.linetra.permwatch.data.AlertDiff
 import com.linetra.permwatch.data.PermsStore
+import com.linetra.permwatch.data.SensitivePermissions
 import com.linetra.permwatch.notify.AlertNotifier
 import com.linetra.permwatch.scanner.PermissionScanner
 
@@ -29,7 +30,8 @@ class PermissionScanWorker(
 
         val baseline = store.currentBaseline()
         val ignored = store.currentIgnored()
-        val flagged = AlertDiff.compute(apps, baseline, ignored)
+        val watched = SensitivePermissions.watchedSet(store.currentUnwatched())
+        val flagged = AlertDiff.compute(apps, baseline, ignored, watched)
 
         val notifier = AlertNotifier(ctx)
         notifier.ensureChannel()

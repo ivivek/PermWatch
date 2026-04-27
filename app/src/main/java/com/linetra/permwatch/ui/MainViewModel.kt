@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.linetra.permwatch.data.AlertDiff
 import com.linetra.permwatch.data.InstalledAppPerms
 import com.linetra.permwatch.data.PermsStore
+import com.linetra.permwatch.data.SensitivePermissions
 import com.linetra.permwatch.notify.AlertNotifier
 import com.linetra.permwatch.scanner.PermissionScanner
 import com.linetra.permwatch.worker.ScanScheduler
@@ -52,6 +53,11 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         .map<Boolean, Boolean?> { it }
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
+    /** Manifest names the user has opted out of watching. Drives both the Settings UI and
+     *  the diff filter — empty by default so first-run watches the full catalog. */
+    val unwatched: StateFlow<Set<String>> = store.unwatched
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptySet())
+
     fun refresh() {
         viewModelScope.launch {
             if (!store.isOnboarded()) return@launch
@@ -62,11 +68,12 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
             val baseline = store.currentBaseline()
             val ignored = store.currentIgnored()
+            val watched = SensitivePermissions.watchedSet(store.currentUnwatched())
             _state.value = UiState(
                 loading = false,
-                rows = toRows(apps, baseline, ignored),
+                rows = toRows(apps, baseline, ignored, watched),
             )
-            updateNotification(apps, baseline, ignored)
+            updateNotification(apps, baseline, ignored, watched)
         }
     }
 
@@ -105,12 +112,27 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /** Toggle whether a sensitive permission is watched. Re-enabling silently merges current
+     *  grants of that perm into the baseline, so existing grants don't fire as new alerts. */
+    fun setWatched(perm: String, watched: Boolean) {
+        viewModelScope.launch {
+            val wasUnwatched = perm in store.currentUnwatched()
+            store.setUnwatched(perm, !watched)
+            if (watched && wasUnwatched) {
+                val apps = withContext(Dispatchers.IO) { scanner.scanAll() }
+                store.mergeIntoBaseline(perm, AlertDiff.currentGrantsMap(apps))
+            }
+            refresh()
+        }
+    }
+
     private suspend fun updateNotification(
         apps: List<InstalledAppPerms>,
         baseline: Map<String, Set<String>>,
         ignored: Set<String>,
+        watched: Set<String>,
     ) = withContext(Dispatchers.IO) {
-        val flagged = AlertDiff.compute(apps, baseline, ignored)
+        val flagged = AlertDiff.compute(apps, baseline, ignored, watched)
         val previousCount = store.currentLastAlertCount()
         notifier.ensureChannel()
         notifier.updateSummary(flagged, previousCount)
@@ -121,20 +143,23 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         apps: List<InstalledAppPerms>,
         baseline: Map<String, Set<String>>,
         ignored: Set<String>,
+        watched: Set<String>,
     ): List<AppRow> {
         return apps
-            .filter { it.grantedSensitive.isNotEmpty() }
             .map { app ->
+                val watchedGranted = app.grantedSensitive intersect watched
                 val known = baseline[app.packageName] ?: emptySet()
                 AppRow(
                     packageName = app.packageName,
                     label = app.label,
                     isSystem = app.isSystem,
-                    granted = app.grantedSensitive,
-                    newPerms = app.grantedSensitive - known,
+                    granted = watchedGranted,
+                    newPerms = watchedGranted - known,
                     isIgnored = app.packageName in ignored,
                 )
             }
+            .filter { it.granted.isNotEmpty() }
             .sortedWith(compareByDescending<AppRow> { it.hasAlert }.thenBy { it.label.lowercase() })
     }
+
 }

@@ -53,6 +53,10 @@ object SensitivePermissions {
 
     val byManifestName: Map<String, SensitivePermission> = all.associateBy { it.manifestName }
 
+    private val allManifestNames: Set<String> = all.map { it.manifestName }.toSet()
+
     fun labelFor(manifestName: String): String =
         byManifestName[manifestName]?.shortLabel ?: manifestName.substringAfterLast('.')
+
+    fun watchedSet(unwatched: Set<String>): Set<String> = allManifestNames - unwatched
 }
