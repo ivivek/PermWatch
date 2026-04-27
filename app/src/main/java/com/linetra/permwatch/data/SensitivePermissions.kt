@@ -60,3 +60,100 @@ object SensitivePermissions {
 
     fun watchedSet(unwatched: Set<String>): Set<String> = allManifestNames - unwatched
 }
+
+data class PermissionGroup(
+    val id: String,
+    val label: String,
+    val category: PermissionCategory,
+    val members: Set<String>,
+)
+
+object PermissionGroups {
+
+    val all: List<PermissionGroup> = listOf(
+        PermissionGroup(
+            id = "sms",
+            label = "SMS",
+            category = PermissionCategory.SMS_CONTACTS,
+            members = setOf(
+                Manifest.permission.READ_SMS,
+                Manifest.permission.SEND_SMS,
+                Manifest.permission.RECEIVE_SMS,
+                Manifest.permission.RECEIVE_MMS,
+            ),
+        ),
+        PermissionGroup(
+            id = "contacts",
+            label = "Contacts",
+            category = PermissionCategory.SMS_CONTACTS,
+            members = setOf(
+                Manifest.permission.READ_CONTACTS,
+                Manifest.permission.WRITE_CONTACTS,
+                Manifest.permission.GET_ACCOUNTS,
+            ),
+        ),
+        PermissionGroup(
+            id = "call_log",
+            label = "Call log",
+            category = PermissionCategory.SMS_CONTACTS,
+            members = setOf(
+                Manifest.permission.READ_CALL_LOG,
+                Manifest.permission.WRITE_CALL_LOG,
+            ),
+        ),
+        PermissionGroup(
+            id = "phone",
+            label = "Phone",
+            category = PermissionCategory.SMS_CONTACTS,
+            members = setOf(
+                Manifest.permission.READ_PHONE_STATE,
+                Manifest.permission.READ_PHONE_NUMBERS,
+                Manifest.permission.CALL_PHONE,
+                Manifest.permission.ANSWER_PHONE_CALLS,
+                Manifest.permission.PROCESS_OUTGOING_CALLS,
+            ),
+        ),
+        PermissionGroup(
+            id = "microphone",
+            label = "Microphone",
+            category = PermissionCategory.MIC_CAMERA,
+            members = setOf(Manifest.permission.RECORD_AUDIO),
+        ),
+        PermissionGroup(
+            id = "camera",
+            label = "Camera",
+            category = PermissionCategory.MIC_CAMERA,
+            members = setOf(Manifest.permission.CAMERA),
+        ),
+        PermissionGroup(
+            id = "location",
+            label = "Location",
+            category = PermissionCategory.LOCATION,
+            members = setOf(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION,
+                Manifest.permission.ACCESS_BACKGROUND_LOCATION,
+            ),
+        ),
+        PermissionGroup(
+            id = "draw_over",
+            label = "Draw over apps",
+            category = PermissionCategory.SPECIAL,
+            members = setOf(Manifest.permission.SYSTEM_ALERT_WINDOW),
+        ),
+        PermissionGroup(
+            id = "all_files",
+            label = "All files access",
+            category = PermissionCategory.SPECIAL,
+            members = setOf("android.permission.MANAGE_EXTERNAL_STORAGE"),
+        ),
+        PermissionGroup(
+            id = "accessibility",
+            label = "Accessibility",
+            category = PermissionCategory.SPECIAL,
+            members = setOf("android.permission.BIND_ACCESSIBILITY_SERVICE"),
+        ),
+    )
+
+    val byId: Map<String, PermissionGroup> = all.associateBy { it.id }
+}

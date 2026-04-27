@@ -30,13 +30,19 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -51,7 +57,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.linetra.permwatch.data.PermissionCategory
+import com.linetra.permwatch.data.PermissionGroup
+import com.linetra.permwatch.data.PermissionGroups
 import com.linetra.permwatch.data.SensitivePermissions
+import com.linetra.permwatch.ui.theme.HoloPalette
 import com.linetra.permwatch.ui.atoms.Glass
 import com.linetra.permwatch.ui.atoms.Iris
 import com.linetra.permwatch.ui.theme.LocalHolo
@@ -225,18 +235,50 @@ private fun AppListWithTabs(
     val userApps = remember(state.rows) { state.rows.filter { !it.isSystem } }
     val systemApps = remember(state.rows) { state.rows.filter { it.isSystem } }
     var selected by rememberSaveable { mutableStateOf(TabId.User) }
-    val visible = if (selected == TabId.User) userApps else systemApps
+
+    var groupFilters by rememberSaveable(saver = PermFilterSaver) { mutableStateOf(emptySet<String>()) }
+    var sheetOpen by rememberSaveable { mutableStateOf(false) }
+
+    // Perms granted by at least one app in the current scan.
+    val availablePerms = remember(state.rows) {
+        state.rows.flatMapTo(HashSet()) { it.granted }
+    }
+    // Groups with at least one member granted somewhere in the current scan.
+    val availableGroups = remember(availablePerms) {
+        PermissionGroups.all.filter { g -> g.members.any { it in availablePerms } }
+    }
+    val availableGroupIds = remember(availableGroups) { availableGroups.map { it.id }.toSet() }
+    // Drop selections for groups that vanished (all members revoked / app uninstalled).
+    val activeFilters = remember(groupFilters, availableGroupIds) {
+        groupFilters intersect availableGroupIds
+    }
+    // Union of every member perm across the active groups — used for fast row matching.
+    val activePerms = remember(activeFilters) {
+        activeFilters.flatMapTo(HashSet()) { id -> PermissionGroups.byId[id]?.members.orEmpty() }
+    }
+
+    val tabApps = if (selected == TabId.User) userApps else systemApps
+    val matches: (AppRow) -> Boolean = { row -> row.granted.any { it in activePerms } }
+    val visible = if (activeFilters.isNotEmpty()) tabApps.filter(matches) else tabApps
+    val userCount = if (activeFilters.isNotEmpty()) userApps.count(matches) else userApps.size
+    val systemCount = if (activeFilters.isNotEmpty()) systemApps.count(matches) else systemApps.size
 
     Column(Modifier.fillMaxSize()) {
         AlertStrip(count = state.alertCount, onAcceptAll = onAcceptAll)
         Tabs(
             value = selected,
             onChange = { selected = it },
-            userCount = userApps.size,
-            systemCount = systemApps.size,
+            userCount = userCount,
+            systemCount = systemCount,
+            filterActiveCount = activeFilters.size,
+            onOpenFilter = { sheetOpen = true },
         )
         if (visible.isEmpty()) {
-            EmptyState(tab = selected)
+            EmptyState(
+                tab = selected,
+                filterCount = activeFilters.size,
+                singleFilterLabel = activeFilters.singleOrNull()?.let { PermissionGroups.byId[it]?.label },
+            )
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
@@ -254,7 +296,24 @@ private fun AppListWithTabs(
             }
         }
     }
+
+    if (sheetOpen) {
+        PermFilterSheet(
+            available = availableGroups,
+            selected = activeFilters,
+            onToggle = { id, on ->
+                groupFilters = if (on) groupFilters + id else groupFilters - id
+            },
+            onClearAll = { groupFilters = emptySet() },
+            onDismiss = { sheetOpen = false },
+        )
+    }
 }
+
+private val PermFilterSaver = listSaver<MutableState<Set<String>>, String>(
+    save = { it.value.toList() },
+    restore = { mutableStateOf(it.toSet()) },
+)
 
 // ── Alert strip ────────────────────────────────────────
 
@@ -340,6 +399,8 @@ private fun Tabs(
     onChange: (TabId) -> Unit,
     userCount: Int,
     systemCount: Int,
+    filterActiveCount: Int,
+    onOpenFilter: () -> Unit,
 ) {
     val palette = LocalHolo.current
     Glass(
@@ -349,7 +410,10 @@ private fun Tabs(
             .fillMaxWidth(),
         cornerRadius = 14.dp,
     ) {
-        Row(modifier = Modifier.padding(4.dp)) {
+        Row(
+            modifier = Modifier.padding(4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             TabButton(
                 modifier = Modifier.weight(1f),
                 active = value == TabId.User,
@@ -367,6 +431,50 @@ private fun Tabs(
                 onClick = { onChange(TabId.System) },
                 palette = palette,
             )
+            Spacer(Modifier.width(4.dp))
+            FilterTabButton(
+                activeCount = filterActiveCount,
+                onClick = onOpenFilter,
+                palette = palette,
+            )
+        }
+    }
+}
+
+@Composable
+private fun FilterTabButton(
+    activeCount: Int,
+    onClick: () -> Unit,
+    palette: HoloPalette,
+) {
+    val active = activeCount > 0
+    val bg = if (active) {
+        Brush.linearGradient(
+            colors = listOf(
+                palette.accentA.copy(alpha = 0.13f),
+                palette.accentB.copy(alpha = 0.13f),
+            ),
+        )
+    } else {
+        Brush.linearGradient(listOf(Color.Transparent, Color.Transparent))
+    }
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(10.dp))
+            .background(bg)
+            .clickable(onClick = onClick)
+            .padding(vertical = 9.dp, horizontal = 12.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        FilterGlyph(color = if (active) palette.ink else palette.inkMute)
+        if (active) {
+            Text(
+                text = activeCount.toString(),
+                fontFamily = Mono,
+                fontSize = 10.sp,
+                color = palette.inkSoft,
+            )
         }
     }
 }
@@ -378,7 +486,7 @@ private fun TabButton(
     label: String,
     count: Int,
     onClick: () -> Unit,
-    palette: com.linetra.permwatch.ui.theme.HoloPalette,
+    palette: HoloPalette,
 ) {
     val bg = if (active) {
         Brush.linearGradient(
@@ -419,8 +527,15 @@ private fun TabButton(
 // ── Empty state ────────────────────────────────────────
 
 @Composable
-private fun EmptyState(tab: TabId) {
+private fun EmptyState(tab: TabId, filterCount: Int = 0, singleFilterLabel: String? = null) {
     val palette = LocalHolo.current
+    val tabWord = if (tab == TabId.User) "installed" else "system"
+    val body = when {
+        filterCount == 0 -> "No $tabWord apps currently hold any of the watched permissions."
+        filterCount == 1 && singleFilterLabel != null ->
+            "No $tabWord apps currently hold the \u201C$singleFilterLabel\u201D permission."
+        else -> "No $tabWord apps match the selected permissions."
+    }
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -441,7 +556,7 @@ private fun EmptyState(tab: TabId) {
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                "No ${if (tab == TabId.User) "installed" else "system"} apps currently hold any of the watched permissions.",
+                text = body,
                 color = palette.inkSoft,
                 fontSize = 12.sp,
                 modifier = Modifier.width(260.dp),
@@ -718,6 +833,240 @@ private fun AppAvatar(label: String, packageName: String, palette: com.linetra.p
             fontSize = 18.sp,
             letterSpacing = (-0.3).sp,
         )
+    }
+}
+
+// ── Permission filter (sheet + glyph) ──────────────────
+
+@Composable
+private fun FilterGlyph(color: Color) {
+    androidx.compose.foundation.Canvas(modifier = Modifier.size(11.dp)) {
+        val stroke = androidx.compose.ui.graphics.drawscope.Stroke(
+            width = 1.3.dp.toPx(),
+            cap = androidx.compose.ui.graphics.StrokeCap.Round,
+            join = androidx.compose.ui.graphics.StrokeJoin.Round,
+        )
+        val w = size.width
+        val h = size.height
+        val path = androidx.compose.ui.graphics.Path().apply {
+            moveTo(w * 0.10f, h * 0.18f)
+            lineTo(w * 0.90f, h * 0.18f)
+            lineTo(w * 0.58f, h * 0.55f)
+            lineTo(w * 0.58f, h * 0.90f)
+            lineTo(w * 0.42f, h * 0.78f)
+            lineTo(w * 0.42f, h * 0.55f)
+            close()
+        }
+        drawPath(path, color = color, style = stroke)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PermFilterSheet(
+    available: List<PermissionGroup>,
+    selected: Set<String>,
+    onToggle: (String, Boolean) -> Unit,
+    onClearAll: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val palette = LocalHolo.current
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val groupedByCategory = remember(available) { available.groupBy { it.category } }
+    val navBars = WindowInsets.navigationBars.asPaddingValues()
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = palette.bgDeep,
+        contentColor = palette.ink,
+        contentWindowInsets = { WindowInsets.statusBars },
+        dragHandle = {
+            Box(
+                modifier = Modifier
+                    .padding(top = 10.dp, bottom = 6.dp)
+                    .size(width = 36.dp, height = 4.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(palette.stroke),
+            )
+        },
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = navBars.calculateBottomPadding()),
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = "FILTER \u00B7 BY PERMISSION",
+                    color = palette.inkSoft,
+                    fontFamily = Mono,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Medium,
+                    letterSpacing = 2.sp,
+                    modifier = Modifier.weight(1f),
+                )
+                if (selected.isNotEmpty()) {
+                    Text(
+                        text = "Clear all",
+                        color = palette.inkSoft,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable(onClick = onClearAll)
+                            .padding(horizontal = 8.dp, vertical = 4.dp),
+                    )
+                }
+            }
+            LazyColumn(
+                modifier = Modifier.fillMaxWidth(),
+                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
+                PermissionCategory.values().forEach { cat ->
+                    val groups = groupedByCategory[cat].orEmpty()
+                    if (groups.isEmpty()) return@forEach
+                    item(key = "head-${cat.name}") {
+                        FilterSectionHeader(title = stringResource(cat.displayRes))
+                    }
+                    item(key = "card-${cat.name}") {
+                        Glass(modifier = Modifier.fillMaxWidth()) {
+                            Column {
+                                groups.forEachIndexed { idx, group ->
+                                    if (idx > 0) {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(horizontal = 16.dp)
+                                                .height(0.5.dp)
+                                                .background(palette.stroke),
+                                        )
+                                    }
+                                    GroupCheckRow(
+                                        group = group,
+                                        checked = group.id in selected,
+                                        onToggle = { on -> onToggle(group.id, on) },
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+                if (available.isEmpty()) {
+                    item {
+                        Text(
+                            text = "Nothing to filter \u2014 no apps in the current scan hold any watched permissions.",
+                            color = palette.inkSoft,
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 12.dp),
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun FilterSectionHeader(title: String) {
+    val palette = LocalHolo.current
+    Row(
+        modifier = Modifier.padding(start = 4.dp, top = 4.dp, bottom = 2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(6.dp)
+                .clip(CircleShape)
+                .background(Brush.linearGradient(listOf(palette.accentA, palette.accentB))),
+        )
+        Spacer(Modifier.width(10.dp))
+        Text(
+            text = title.uppercase(),
+            color = palette.inkSoft,
+            fontFamily = Mono,
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Medium,
+            letterSpacing = 2.sp,
+        )
+    }
+}
+
+@Composable
+private fun GroupCheckRow(
+    group: PermissionGroup,
+    checked: Boolean,
+    onToggle: (Boolean) -> Unit,
+) {
+    val palette = LocalHolo.current
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onToggle(!checked) }
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(
+                text = group.label,
+                color = palette.ink,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+            )
+            if (group.members.size > 1) {
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    text = "${group.members.size} permissions",
+                    color = palette.inkMute,
+                    fontFamily = Mono,
+                    fontSize = 10.sp,
+                )
+            }
+        }
+        Spacer(Modifier.width(12.dp))
+        FilterCheckBox(checked = checked)
+    }
+}
+
+@Composable
+private fun FilterCheckBox(checked: Boolean) {
+    val palette = LocalHolo.current
+    Box(
+        modifier = Modifier
+            .size(20.dp)
+            .clip(RoundedCornerShape(6.dp))
+            .background(
+                if (checked) Brush.linearGradient(listOf(palette.accentA, palette.accentC))
+                else Brush.linearGradient(
+                    listOf(
+                        if (palette.isDark) Color.White.copy(alpha = 0.06f) else palette.bgDeep,
+                        if (palette.isDark) Color.White.copy(alpha = 0.06f) else palette.bgDeep,
+                    ),
+                ),
+            ),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (checked) {
+            androidx.compose.foundation.Canvas(modifier = Modifier.size(12.dp)) {
+                val stroke = androidx.compose.ui.graphics.drawscope.Stroke(
+                    width = 1.6.dp.toPx(),
+                    cap = androidx.compose.ui.graphics.StrokeCap.Round,
+                    join = androidx.compose.ui.graphics.StrokeJoin.Round,
+                )
+                val path = androidx.compose.ui.graphics.Path().apply {
+                    moveTo(size.width * 0.18f, size.height * 0.55f)
+                    lineTo(size.width * 0.42f, size.height * 0.78f)
+                    lineTo(size.width * 0.85f, size.height * 0.30f)
+                }
+                drawPath(path, color = palette.bgDeep, style = stroke)
+            }
+        }
     }
 }
 
