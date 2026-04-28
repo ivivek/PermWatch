@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -40,14 +41,18 @@ import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.launch
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.Alignment
@@ -85,6 +90,7 @@ fun AppScaffold(
     onToggleIgnore: (String, Boolean) -> Unit,
     onManage: (String) -> Unit,
     onOpenSettings: () -> Unit,
+    scrollToAlert: Flow<Unit> = emptyFlow(),
 ) {
     val statusBars = WindowInsets.statusBars.asPaddingValues()
     val navBars = WindowInsets.navigationBars.asPaddingValues()
@@ -130,6 +136,7 @@ fun AppScaffold(
                     onToggleIgnore = handleToggleIgnore,
                     onManage = onManage,
                     bottomInset = navBars.calculateBottomPadding(),
+                    scrollToAlert = scrollToAlert,
                 )
             }
         }
@@ -277,6 +284,7 @@ private fun AppListWithTabs(
     onToggleIgnore: (String, Boolean) -> Unit,
     onManage: (String) -> Unit,
     bottomInset: androidx.compose.ui.unit.Dp,
+    scrollToAlert: Flow<Unit>,
 ) {
     // Ignored apps are managed from Settings → Ignored apps. They never appear in the main
     // feed — the feed is the signal stream, ignoring something clears it.
@@ -286,6 +294,33 @@ private fun AppListWithTabs(
 
     var groupFilters by rememberSaveable(saver = PermFilterSaver) { mutableStateOf(emptySet<String>()) }
     var sheetOpen by rememberSaveable { mutableStateOf(false) }
+
+    val listState = rememberLazyListState()
+    // The VM emits on [scrollToAlert] only after a notification-tap-driven scan has finished,
+    // so the lists below reflect the post-tap rows by the time the collector fires. We pick
+    // the tab where the alert actually lives, clear filters that might hide it, and reset
+    // scroll. userApps/systemApps are plain vals (rebuilt each composition), so the long-
+    // lived collector closure has to read them via rememberUpdatedState or it'll see the
+    // stale list captured at LaunchedEffect launch time. selected/groupFilters/sheetOpen are
+    // already snapshot-state delegates, so direct reads are fresh.
+    val latestUserApps by rememberUpdatedState(userApps)
+    val latestSystemApps by rememberUpdatedState(systemApps)
+    LaunchedEffect(Unit) {
+        scrollToAlert.collect {
+            val selectedTabHasAlert =
+                (if (selected == TabId.User) latestUserApps else latestSystemApps).any { it.hasAlert }
+            val target = when {
+                selectedTabHasAlert -> selected
+                latestUserApps.any { it.hasAlert } -> TabId.User
+                latestSystemApps.any { it.hasAlert } -> TabId.System
+                else -> selected
+            }
+            if (target != selected) selected = target
+            if (groupFilters.isNotEmpty()) groupFilters = emptySet()
+            sheetOpen = false
+            listState.scrollToItem(0)
+        }
+    }
 
     // Perms granted by at least one app in the current scan.
     val availablePerms = remember(state.rows) {
@@ -329,6 +364,7 @@ private fun AppListWithTabs(
             )
         } else {
             LazyColumn(
+                state = listState,
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 0.dp, bottom = 20.dp + bottomInset),
                 verticalArrangement = Arrangement.spacedBy(10.dp),

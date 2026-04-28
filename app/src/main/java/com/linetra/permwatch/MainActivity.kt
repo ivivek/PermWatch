@@ -15,6 +15,7 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,6 +32,13 @@ import com.linetra.permwatch.ui.theme.PermWatchTheme
 class MainActivity : ComponentActivity() {
 
     private val vm: MainViewModel by viewModels()
+
+    /** Set to true when an alert-tap intent is consumed, so the immediately-following
+     *  [onResume] doesn't kick off a redundant second scan in parallel with the one started
+     *  by [MainViewModel.onAlertTap]. Two concurrent scans would let the cheaper one finish
+     *  first, briefly painting the list at the user's pre-tap scroll position before the
+     *  alert-tap scan completes and the scroll signal lands. */
+    private var skipNextResumeRefresh = false
 
     private val postNotifLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { /* ignore */ }
@@ -52,11 +60,33 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        vm.refresh()
+        if (skipNextResumeRefresh) {
+            skipNextResumeRefresh = false
+        } else {
+            vm.refresh()
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        consumeAlertIntent(intent)
+    }
+
+    /** If [source] carries the alert-tap flag, kick off the scan-and-emit path on the VM and
+     *  swallow the next [onResume] refresh so we don't run two concurrent scans. The extra is
+     *  stripped so a config change doesn't re-fire the path on the same intent. */
+    private fun consumeAlertIntent(source: Intent?) {
+        if (source?.getBooleanExtra(EXTRA_FROM_ALERT, false) == true) {
+            source.removeExtra(EXTRA_FROM_ALERT)
+            skipNextResumeRefresh = true
+            vm.onAlertTap()
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (savedInstanceState == null) consumeAlertIntent(intent)
         enableEdgeToEdge()
         setContent {
             PermWatchTheme {
@@ -72,6 +102,9 @@ class MainActivity : ComponentActivity() {
                         true -> {
                             val state by vm.state.collectAsState()
                             var settingsOpen by rememberSaveable { mutableStateOf(false) }
+                            LaunchedEffect(Unit) {
+                                vm.scrollToAlert.collect { settingsOpen = false }
+                            }
                             if (settingsOpen) {
                                 val unwatched by vm.unwatched.collectAsState()
                                 val intervalSeconds by vm.intervalSeconds.collectAsState()
@@ -95,6 +128,7 @@ class MainActivity : ComponentActivity() {
                                     onToggleIgnore = { pkg, ignored -> vm.toggleIgnore(pkg, ignored) },
                                     onManage = { pkg -> openAppDetailsSettings(pkg) },
                                     onOpenSettings = { settingsOpen = true },
+                                    scrollToAlert = vm.scrollToAlert,
                                 )
                             }
                         }
@@ -102,5 +136,9 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    companion object {
+        const val EXTRA_FROM_ALERT = "from_alert"
     }
 }

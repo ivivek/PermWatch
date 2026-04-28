@@ -76,6 +76,7 @@ class AlertNotifier(private val context: Context) {
 
         val openIntent = Intent(context, MainActivity::class.java).apply {
             addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            putExtra(MainActivity.EXTRA_FROM_ALERT, true)
         }
         val pi = PendingIntent.getActivity(
             context,

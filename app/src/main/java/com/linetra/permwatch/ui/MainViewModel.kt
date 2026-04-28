@@ -11,9 +11,13 @@ import com.linetra.permwatch.notify.AlertNotifier
 import com.linetra.permwatch.scanner.PermissionScanner
 import com.linetra.permwatch.worker.ScanScheduler
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -77,23 +81,58 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         }
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
+    /** Emitted after a notification-tap-driven scan completes, so the UI can pick the right tab
+     *  and scroll to the alerted card *with the post-scan rows*. Replay 0 + buffer 1 so an emit
+     *  during a config change is held until the new collector attaches; DROP_OLDEST keeps only
+     *  the latest pending jump if multiple taps land before the UI catches up. */
+    private val _scrollToAlert = MutableSharedFlow<Unit>(
+        replay = 0,
+        extraBufferCapacity = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST,
+    )
+    val scrollToAlert: SharedFlow<Unit> = _scrollToAlert.asSharedFlow()
+
+    /** Packages whose alert the user just acknowledged via "Got it" (or "Accept all"). They
+     *  keep their position in the sort as if still alerted, so the card visually calms down in
+     *  place rather than re-shuffling alphabetically into the non-alert region. Cleared on any
+     *  refresh that isn't an accept — onResume, manual rescan, notification tap, ignore/watch
+     *  toggles — so the next "round" starts fresh. In-memory only; cold start clears via VM
+     *  recreation. */
+    private var recentlyAccepted: Set<String> = emptySet()
+
     fun refresh() {
         viewModelScope.launch {
-            if (!store.isOnboarded()) return@launch
-            _state.value = _state.value.copy(loading = true)
-            val apps = withContext(Dispatchers.IO) { scanner.scanAll() }
-
-            store.pruneBaselineToCurrent(AlertDiff.currentGrantsMap(apps))
-
-            val baseline = store.currentBaseline()
-            val ignored = store.currentIgnored()
-            val watched = SensitivePermissions.watchedSet(store.currentUnwatched())
-            _state.value = UiState(
-                loading = false,
-                rows = toRows(apps, baseline, ignored, watched),
-            )
-            updateNotification(apps, baseline, ignored, watched)
+            recentlyAccepted = emptySet()
+            runScan()
         }
+    }
+
+    /** Called by [MainActivity] when the activity is opened via a notification tap. Runs a scan
+     *  inline and emits [scrollToAlert] only after the new rows are visible to the UI, so the
+     *  collector can read post-refresh data when picking a tab and scrolling. */
+    fun onAlertTap() {
+        viewModelScope.launch {
+            recentlyAccepted = emptySet()
+            runScan()
+            _scrollToAlert.emit(Unit)
+        }
+    }
+
+    private suspend fun runScan() {
+        if (!store.isOnboarded()) return
+        _state.value = _state.value.copy(loading = true)
+        val apps = withContext(Dispatchers.IO) { scanner.scanAll() }
+
+        store.pruneBaselineToCurrent(AlertDiff.currentGrantsMap(apps))
+
+        val baseline = store.currentBaseline()
+        val ignored = store.currentIgnored()
+        val watched = SensitivePermissions.watchedSet(store.currentUnwatched())
+        _state.value = UiState(
+            loading = false,
+            rows = toRows(apps, baseline, ignored, watched, recentlyAccepted),
+        )
+        updateNotification(apps, baseline, ignored, watched)
     }
 
     /** Called from the Intro screen's "Activate" button. Snapshots current grants as the
@@ -119,16 +158,23 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     fun acceptApp(packageName: String) {
         viewModelScope.launch {
             val row = _state.value.rows.firstOrNull { it.packageName == packageName } ?: return@launch
+            recentlyAccepted = recentlyAccepted + packageName
             store.acceptForPackage(packageName, row.granted)
-            refresh()
+            runScan()
         }
     }
 
     fun acceptAll() {
         viewModelScope.launch {
+            val nowAlerted = _state.value.rows
+                .asSequence()
+                .filter { it.hasAlert }
+                .map { it.packageName }
+                .toSet()
+            recentlyAccepted = recentlyAccepted + nowAlerted
             val apps = withContext(Dispatchers.IO) { scanner.scanAll() }
             store.acceptCurrentAsBaseline(AlertDiff.currentGrantsMap(apps))
-            refresh()
+            runScan()
         }
     }
 
@@ -171,6 +217,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         baseline: Map<String, Set<String>>,
         ignored: Set<String>,
         watched: Set<String>,
+        recentlyAccepted: Set<String>,
     ): List<AppRow> {
         return apps
             .map { app ->
@@ -186,7 +233,10 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 )
             }
             .filter { it.granted.isNotEmpty() }
-            .sortedWith(compareByDescending<AppRow> { it.hasAlert }.thenBy { it.label.lowercase() })
+            .sortedWith(
+                compareByDescending<AppRow> { it.hasAlert || it.packageName in recentlyAccepted }
+                    .thenBy { it.label.lowercase() },
+            )
     }
 
 }
