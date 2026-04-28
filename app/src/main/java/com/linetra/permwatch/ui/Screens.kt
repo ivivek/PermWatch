@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -723,7 +722,6 @@ private fun AppCard(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(IntrinsicSize.Min)
             .let { if (ignored) it.alpha(0.5f) else it },
     ) {
         Glass(
@@ -797,18 +795,24 @@ private fun AppCard(
             }
         }
         if (hasAlert) {
-            // Glowing left edge marker — full card height minus padding
+            // Glowing left edge marker — sized off the Glass card via matchParentSize so it
+            // doesn't depend on intrinsic-height measurement (FlowRow above mis-reports it).
             Box(
                 modifier = Modifier
-                    .align(Alignment.CenterStart)
-                    .padding(vertical = 14.dp)
-                    .width(3.dp)
-                    .fillMaxHeight()
-                    .clip(RoundedCornerShape(2.dp))
-                    .background(
-                        Brush.verticalGradient(listOf(palette.accentA, palette.accentB)),
-                    ),
-            )
+                    .matchParentSize()
+                    .padding(vertical = 14.dp),
+                contentAlignment = Alignment.CenterStart,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .width(3.dp)
+                        .fillMaxHeight()
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(
+                            Brush.verticalGradient(listOf(palette.accentA, palette.accentB)),
+                        ),
+                )
+            }
         }
     }
 }
