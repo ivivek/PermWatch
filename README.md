@@ -76,8 +76,10 @@ adb shell pm clear com.linetra.permissionalerts.dev
   state. This is the product's core function.
 - `POST_NOTIFICATIONS` — API 33+, requested at the moment you tap **Activate**
   on the intro screen.
-- `RECEIVE_BOOT_COMPLETED` — declared but unused; WorkManager handles its own
-  boot restore.
+- `RECEIVE_BOOT_COMPLETED` — used by `androidx.work` (it ships its own
+  `BootCompletedReceiver` to re-enqueue persisted work after reboot, which
+  resumes the self-chaining scan cycle). The library declares the permission
+  in its own manifest; our app-level declaration is redundant.
 
 Permission Alerts does **not** request any of the sensitive permissions it watches.
 

@@ -145,8 +145,10 @@ current interval from the store before calling
 `ScanScheduler.scheduleNext(ctx, intervalSeconds)`, so changing cadence in
 Settings takes effect at the next tick. `MainViewModel.setIntervalSeconds`
 also calls `scheduleNext` immediately so the change isn't held up by the
-in-flight delay. WorkManager auto-restores the chain after reboot; no
-`BOOT_COMPLETED` receiver needed.
+in-flight delay. WorkManager auto-restores the chain after reboot —
+`androidx.work` ships its own `BootCompletedReceiver` (and declares
+`RECEIVE_BOOT_COMPLETED` in its library manifest, which the manifest merger
+fuses into ours), so we don't write or register one ourselves.
 
 ### How perms are detected
 
@@ -214,8 +216,11 @@ chrome with `accentC` violet.
   state. Tagged `tools:ignore="QueryAllPackagesPermission"` because Play Store
   requires justification; our justification is the product's core function.
 - `POST_NOTIFICATIONS` — API 33+ runtime, requested on first `onCreate`.
-- `RECEIVE_BOOT_COMPLETED` — declared but not actively used; WorkManager
-  handles its own boot restore.
+- `RECEIVE_BOOT_COMPLETED` — used by `androidx.work`'s own
+  `BootCompletedReceiver` to re-enqueue persisted work after reboot, which is
+  what restarts the self-chaining scan cycle. The library's manifest already
+  declares both the permission and the receiver; our app-level declaration is
+  redundant (manifest merger picks up either) but kept for visibility.
 
 ## Design — shipped v2 holographic
 
