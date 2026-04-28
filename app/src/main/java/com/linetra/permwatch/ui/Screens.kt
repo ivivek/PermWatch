@@ -7,7 +7,9 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -62,6 +64,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -78,6 +84,7 @@ import com.linetra.permwatch.ui.atoms.Glass
 import com.linetra.permwatch.ui.atoms.Iris
 import com.linetra.permwatch.ui.theme.LocalHolo
 import com.linetra.permwatch.ui.theme.Mono
+import androidx.core.graphics.drawable.toBitmap
 
 private enum class TabId(val label: String) { User("User"), System("System") }
 
@@ -910,24 +917,43 @@ private fun AppCard(
 
 @Composable
 private fun AppAvatar(label: String, packageName: String, palette: com.linetra.permwatch.ui.theme.HoloPalette) {
-    val initial = label.firstOrNull { it.isLetterOrDigit() }?.uppercaseChar()?.toString() ?: "?"
-    val hue = ((packageName.hashCode().toLong() and 0xFFFFFFFFL) % 360L).toFloat()
-    val c1 = Color.hsl(hue, saturation = 0.55f, lightness = if (palette.isDark) 0.42f else 0.55f)
-    val c2 = Color.hsl((hue + 40f) % 360f, saturation = 0.50f, lightness = if (palette.isDark) 0.30f else 0.45f)
-    Box(
-        modifier = Modifier
-            .size(42.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(Brush.linearGradient(listOf(c1, c2))),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = initial,
-            color = Color.White,
-            fontWeight = FontWeight.SemiBold,
-            fontSize = 18.sp,
-            letterSpacing = (-0.3).sp,
+    val context = LocalContext.current
+    val icon: ImageBitmap? = remember(packageName) {
+        runCatching {
+            context.packageManager.getApplicationIcon(packageName)
+                .toBitmap(width = 144, height = 144)
+                .asImageBitmap()
+        }.getOrNull()
+    }
+    val shape = RoundedCornerShape(12.dp)
+    val avatarModifier = Modifier
+        .size(42.dp)
+        .clip(shape)
+        .border(0.5.dp, palette.stroke, shape)
+    if (icon != null) {
+        Image(
+            bitmap = icon,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = avatarModifier,
         )
+    } else {
+        val initial = label.firstOrNull { it.isLetterOrDigit() }?.uppercaseChar()?.toString() ?: "?"
+        val hue = ((packageName.hashCode().toLong() and 0xFFFFFFFFL) % 360L).toFloat()
+        val c1 = Color.hsl(hue, saturation = 0.55f, lightness = if (palette.isDark) 0.42f else 0.55f)
+        val c2 = Color.hsl((hue + 40f) % 360f, saturation = 0.50f, lightness = if (palette.isDark) 0.30f else 0.45f)
+        Box(
+            modifier = avatarModifier.background(Brush.linearGradient(listOf(c1, c2))),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = initial,
+                color = Color.White,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 18.sp,
+                letterSpacing = (-0.3).sp,
+            )
+        }
     }
 }
 
