@@ -226,8 +226,8 @@ Both palettes ship: `HoloDark` for system dark, `HoloLight` for system light
 raised from 5–9% to 60–95% so it reads on paper). System light/dark choice
 flips the palette; same components, no branching downstream.
 
-Voice: "Field is quiet" / "Signal · since baseline" / "N apps have new
-access" / "Got it" (instead of "Accept") / "Watching" / "Ignored".
+Voice: "Signal · since baseline" / "N apps have new access" / "Accept"
++ "Accept all" / "Watching" / "Ignored".
 
 Prototype source-of-truth at `/opt/dev/PermWatch/`:
 - `PermWatch v2.jsx` — dark, what HoloDark is derived from.

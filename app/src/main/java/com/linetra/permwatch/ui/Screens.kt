@@ -1361,7 +1361,7 @@ private fun AcceptButton(onClick: () -> Unit) {
             .padding(horizontal = 14.dp, vertical = 7.dp),
     ) {
         Text(
-            text = "Got it",
+            text = "Accept",
             color = palette.bgDeep,
             fontSize = 11.sp,
             fontWeight = FontWeight.SemiBold,

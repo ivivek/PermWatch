@@ -112,7 +112,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     )
     val scrollToAlert: SharedFlow<Unit> = _scrollToAlert.asSharedFlow()
 
-    /** Packages whose alert the user just acknowledged via "Got it" (or "Accept all"). They
+    /** Packages whose alert the user just acknowledged via "Accept" (or "Accept all"). They
      *  keep their position in the sort as if still alerted, so the card visually calms down in
      *  place rather than re-shuffling alphabetically into the non-alert region. Cleared on any
      *  refresh that isn't an accept — onResume, manual rescan, notification tap, ignore/watch
