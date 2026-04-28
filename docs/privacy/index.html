@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy Policy — Permission Alerts</title>
+<style>
+  :root {
+    --ink: #1b1b22;
+    --ink-soft: #4b4b58;
+    --bg: #fbfbfd;
+    --rule: #e7e7ee;
+    --accent: #6f5cff;
+    --code-bg: #f1f1f6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ink: #ececf2;
+      --ink-soft: #a4a4b3;
+      --bg: #0e0e14;
+      --rule: #23232c;
+      --accent: #8f8cff;
+      --code-bg: #1a1a22;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+    -webkit-font-smoothing: antialiased;
+  }
+  main {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 56px 24px 96px;
+  }
+  .kicker {
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 600;
+    margin: 0 0 12px;
+  }
+  h1 {
+    font-size: 36px;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    margin: 0 0 8px;
+    font-weight: 600;
+  }
+  .lede {
+    font-size: 17px;
+    color: var(--ink-soft);
+    margin: 0 0 40px;
+  }
+  h2 {
+    font-size: 20px;
+    margin: 44px 0 12px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+  }
+  p, li { color: var(--ink); }
+  ul { padding-left: 22px; }
+  li { margin: 6px 0; }
+  code {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, monospace;
+    font-size: 13.5px;
+    background: var(--code-bg);
+    padding: 1.5px 6px;
+    border-radius: 4px;
+  }
+  strong { font-weight: 600; }
+  a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  hr { border: 0; border-top: 1px solid var(--rule); margin: 56px 0 24px; }
+  footer {
+    color: var(--ink-soft);
+    font-size: 13px;
+  }
+  .callout {
+    background: var(--code-bg);
+    border-left: 3px solid var(--accent);
+    padding: 14px 18px;
+    border-radius: 6px;
+    margin: 24px 0;
+  }
+  .callout p:last-child { margin-bottom: 0; }
+  .callout p:first-child { margin-top: 0; }
+</style>
+</head>
+<body>
+<main>
+  <p class="kicker">Privacy Policy</p>
+  <h1>Permission Alerts</h1>
+  <p class="lede">A short, plain-English explanation of what this app does with your data — because it does almost nothing with it.</p>
+
+  <div class="callout">
+    <p><strong>The short version:</strong></p>
+    <ul>
+      <li>Permission Alerts does <strong>not collect, transmit, or share any of your data</strong>.</li>
+      <li>It does not have internet access. The <code>INTERNET</code> permission is not declared, so the operating system will not let it make a network request even if it tried.</li>
+      <li>Everything you see in the app is computed on your device from data the OS already has.</li>
+    </ul>
+  </div>
+
+  <h2>What the app reads from your device</h2>
+  <p>To do its job, Permission Alerts inspects the following on your phone:</p>
+  <ul>
+    <li><strong>The list of installed apps</strong> (via the <code>QUERY_ALL_PACKAGES</code> permission) — so it knows which apps to check.</li>
+    <li><strong>Which sensitive permissions each app has been granted</strong> (microphone, camera, contacts, SMS, call log, location, phone, plus special permissions like accessibility, draw-over-other-apps, and all-files storage) — so it can detect new grants since you set your baseline.</li>
+    <li><strong>The set of enabled accessibility services</strong> (read from <code>Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES</code>) — same reason.</li>
+  </ul>
+  <p>It uses standard Android APIs (<code>PackageManager</code>, <code>AppOpsManager</code>, <code>Settings.Secure</code>) for all of this. It never reads file contents, messages, contacts, photos, location, or anything from <em>inside</em> the apps it inspects — only the fact that the OS has granted them a permission.</p>
+
+  <h2>Where your data is stored</h2>
+  <p>In a single Android Jetpack DataStore file inside Permission Alerts' own private storage area. The Android operating system prevents other apps from reading this. It contains:</p>
+  <ul>
+    <li>A baseline snapshot — which app had which sensitive permissions when you activated the app.</li>
+    <li>Your "ignore" list — apps you've muted.</li>
+    <li>Your settings — which permissions to watch and how often to scan.</li>
+    <li>A local notification history of grants and revokes the app has detected.</li>
+  </ul>
+  <p>Nothing else is stored.</p>
+
+  <h2>What leaves your device</h2>
+  <p>Nothing. The app makes zero network requests. There is no analytics, no telemetry, no crash reporting service, no advertising SDK, no third-party library that calls home.</p>
+
+  <h2>Permissions Permission Alerts itself uses</h2>
+  <ul>
+    <li><code>QUERY_ALL_PACKAGES</code> — to enumerate other apps' permission state. Without it, the app cannot do its job.</li>
+    <li><code>POST_NOTIFICATIONS</code> — to deliver alerts in the system notification shade.</li>
+    <li><code>RECEIVE_BOOT_COMPLETED</code> — used by Android's WorkManager library to resume scheduled scans after a reboot.</li>
+  </ul>
+  <p>The app does <strong>not</strong> request any of the sensitive permissions it watches (microphone, camera, contacts, SMS, location, etc.). It only inspects whether <em>other</em> apps hold them.</p>
+
+  <h2>Children</h2>
+  <p>Permission Alerts is not directed at children under 13 and is not designed for them. We do not knowingly collect any information from anyone — children or otherwise — because we do not collect information.</p>
+
+  <h2>Removing your data</h2>
+  <p>Uninstalling Permission Alerts deletes everything the app has stored about you. There is nothing for us to delete on a server because nothing was ever sent to one.</p>
+
+  <h2>Changes to this policy</h2>
+  <p>If this policy ever changes, the "Last updated" date below will change and the new version will be posted at this same URL.</p>
+
+  <h2>Contact</h2>
+  <p>Questions or requests: <a href="mailto:vivek.oss@linetra.com">vivek.oss@linetra.com</a></p>
+
+  <hr>
+  <footer>Last updated: 2026-04-29</footer>
+</main>
+</body>
+</html>

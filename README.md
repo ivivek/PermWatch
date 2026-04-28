@@ -83,6 +83,13 @@ adb shell pm clear com.linetra.permissionalerts.dev
 
 Permission Alerts does **not** request any of the sensitive permissions it watches.
 
+## Privacy
+
+Source: [`docs/privacy/index.html`](./docs/privacy/index.html). Once GitHub
+Pages is enabled for this repo (Settings → Pages → Deploy from branch: `main`,
+folder: `/docs`), it's served at
+<https://ivivek.github.io/PermWatch/privacy/>.
+
 ## License
 
 MIT — see [`LICENSE`](./LICENSE).
