@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">PermWatch</string>
+    <string name="app_name">Permission Alerts</string>
 
     <string name="notif_channel_alerts_name">Permission alerts</string>
     <string name="notif_channel_alerts_desc">Ongoing summary of apps with sensitive permissions granted.</string>

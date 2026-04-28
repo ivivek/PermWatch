@@ -1,4 +1,4 @@
-# PermWatch
+# Permission Alerts
 
 Android privacy watchdog. Scans every installed app for *sensitive permissions*
 it has been granted (mic, camera, contacts, SMS, call log, location, phone,
@@ -189,7 +189,7 @@ invisible in the sheet — they sit in the DataStore inertly.
 Android does not allow a non-system, non-device-owner app to revoke another
 app's permissions. The "Manage" button on each card fires
 `Settings.ACTION_APPLICATION_DETAILS_SETTINGS` with the target package — the
-user revokes manually. Positioning: PermWatch is an **auditor**, not an
+user revokes manually. Positioning: Permission Alerts is an **auditor**, not an
 enforcer. (Bouncer owns the revoke-via-accessibility-service lane.)
 
 ### Notification — calm summary, loud on change

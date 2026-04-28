@@ -188,7 +188,7 @@ private fun MainHeader(
         Iris(size = 22.dp, speedMillis = 16_000)
         Spacer(Modifier.width(10.dp))
         Text(
-            text = "PermWatch",
+            text = "Permission Alerts",
             color = palette.inkSoft,
             fontFamily = Mono,
             fontSize = 13.sp,

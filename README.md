@@ -1,11 +1,11 @@
-# PermWatch
+# Permission Alerts
 
-A privacy watchdog for Android. PermWatch keeps a calm eye on which apps hold
+A privacy watchdog for Android. Permission Alerts keeps a calm eye on which apps hold
 sensitive permissions — microphone, camera, contacts, SMS, call log, location,
 phone, accessibility, draw-over-apps, all-files — and signals via a persistent
 notification the moment a new grant appears.
 
-It's an **auditor, not an enforcer**: PermWatch never revokes a permission. It
+It's an **auditor, not an enforcer**: Permission Alerts never revokes a permission. It
 deep-links into Android Settings so you revoke manually, in one tap.
 
 > Status: in active development. Kotlin + Jetpack Compose, Material 3,
@@ -13,7 +13,7 @@ deep-links into Android Settings so you revoke manually, in one tap.
 
 ## What it does
 
-- **Silent baseline on first install.** PermWatch snapshots whatever's already
+- **Silent baseline on first install.** Permission Alerts snapshots whatever's already
   granted as your starting point — so the 50+ apps that legitimately use
   sensitive perms don't all alert at once.
 - **Diff-driven alerts.** A new grant *above* baseline fires a heads-up
@@ -70,7 +70,7 @@ To exercise the first-run silent-baseline path:
 adb shell pm clear com.linetra.permwatch.dev
 ```
 
-## Permissions PermWatch itself requests
+## Permissions Permission Alerts itself requests
 
 - `QUERY_ALL_PACKAGES` — required on API 30+ to enumerate other apps' permission
   state. This is the product's core function.
@@ -79,7 +79,7 @@ adb shell pm clear com.linetra.permwatch.dev
 - `RECEIVE_BOOT_COMPLETED` — declared but unused; WorkManager handles its own
   boot restore.
 
-PermWatch does **not** request any of the sensitive permissions it watches.
+Permission Alerts does **not** request any of the sensitive permissions it watches.
 
 ## License
 

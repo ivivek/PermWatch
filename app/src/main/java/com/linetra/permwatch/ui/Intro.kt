@@ -49,7 +49,7 @@ private val SLIDES = listOf(
     Slide(
         kicker = "Signal",
         title = "A watchtower for your phone.",
-        body = "PermWatch keeps a calm eye on what sees, hears, and follows you.",
+        body = "Permission Alerts keeps a calm eye on what sees, hears, and follows you.",
     ),
     Slide(
         kicker = "Change",
@@ -59,7 +59,7 @@ private val SLIDES = listOf(
     Slide(
         kicker = "You",
         title = "You stay in control.",
-        body = "Tap Manage to revoke in Android Settings. PermWatch never changes a permission itself.",
+        body = "Tap Manage to revoke in Android Settings. Permission Alerts never changes a permission itself.",
     ),
 )
 
