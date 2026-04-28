@@ -1,4 +1,4 @@
-package com.linetra.permwatch.ui
+package com.linetra.permalerts.ui
 
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
@@ -39,9 +39,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.linetra.permwatch.ui.atoms.Iris
-import com.linetra.permwatch.ui.theme.LocalHolo
-import com.linetra.permwatch.ui.theme.Mono
+import com.linetra.permalerts.ui.atoms.Iris
+import com.linetra.permalerts.ui.theme.LocalHolo
+import com.linetra.permalerts.ui.theme.Mono
 
 private data class Slide(val kicker: String, val title: String, val body: String)
 
@@ -113,7 +113,7 @@ fun Intro(onActivate: () -> Unit) {
                 Iris(size = 22.dp, speedMillis = 22_000)
                 Spacer(Modifier.width(12.dp))
                 Text(
-                    text = "PERMWATCH",
+                    text = "PERMISSION ALERTS",
                     color = palette.inkSoft,
                     fontFamily = Mono,
                     fontSize = 13.sp,

@@ -62,12 +62,12 @@ For the full architecture and the *why* behind each piece, see
 ```
 
 `build.sh` sets `JAVA_HOME` (JBR 21) and `ANDROID_HOME`. Two flavors ship:
-`dev` (`com.linetra.permwatch.dev`) and `prod` (`com.linetra.permwatch`).
+`dev` (`com.linetra.permalerts.dev`) and `prod` (`com.linetra.permalerts`).
 
 To exercise the first-run silent-baseline path:
 
 ```bash
-adb shell pm clear com.linetra.permwatch.dev
+adb shell pm clear com.linetra.permalerts.dev
 ```
 
 ## Permissions Permission Alerts itself requests

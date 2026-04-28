@@ -1,4 +1,4 @@
-package com.linetra.permwatch.ui.theme
+package com.linetra.permalerts.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme

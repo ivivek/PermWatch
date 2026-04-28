@@ -1,4 +1,4 @@
-package com.linetra.permwatch.data
+package com.linetra.permalerts.data
 
 data class InstalledAppPerms(
     val packageName: String,

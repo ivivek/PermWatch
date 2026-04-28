@@ -1,4 +1,4 @@
-package com.linetra.permwatch.ui.atoms
+package com.linetra.permalerts.ui.atoms
 
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -22,7 +22,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.linetra.permwatch.ui.theme.LocalHolo
+import com.linetra.permalerts.ui.theme.LocalHolo
 
 @Composable
 fun Iris(

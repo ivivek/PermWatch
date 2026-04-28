@@ -1,4 +1,4 @@
-package com.linetra.permwatch.data
+package com.linetra.permalerts.data
 
 /**
  * Flagged entry for the alert notification: app `label`/`packageName` has `newPerms` that are

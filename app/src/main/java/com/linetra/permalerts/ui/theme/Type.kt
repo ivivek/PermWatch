@@ -1,4 +1,4 @@
-package com.linetra.permwatch.ui.theme
+package com.linetra.permalerts.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.ExperimentalTextApi
@@ -8,7 +8,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import com.linetra.permwatch.R
+import com.linetra.permalerts.R
 
 @OptIn(ExperimentalTextApi::class)
 private val SpaceGrotesk = FontFamily(

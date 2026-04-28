@@ -1,4 +1,4 @@
-package com.linetra.permwatch.data
+package com.linetra.permalerts.data
 
 import android.content.Context
 import androidx.datastore.core.DataStore

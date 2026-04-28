@@ -1,12 +1,12 @@
-package com.linetra.permwatch.data
+package com.linetra.permalerts.data
 
 import android.Manifest
 
 enum class PermissionCategory(val displayRes: Int) {
-    SMS_CONTACTS(com.linetra.permwatch.R.string.cat_sms_contacts),
-    MIC_CAMERA(com.linetra.permwatch.R.string.cat_mic_camera),
-    LOCATION(com.linetra.permwatch.R.string.cat_location),
-    SPECIAL(com.linetra.permwatch.R.string.cat_special),
+    SMS_CONTACTS(com.linetra.permalerts.R.string.cat_sms_contacts),
+    MIC_CAMERA(com.linetra.permalerts.R.string.cat_mic_camera),
+    LOCATION(com.linetra.permalerts.R.string.cat_location),
+    SPECIAL(com.linetra.permalerts.R.string.cat_special),
 }
 
 data class SensitivePermission(

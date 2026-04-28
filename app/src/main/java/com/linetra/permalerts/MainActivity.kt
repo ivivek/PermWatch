@@ -1,4 +1,4 @@
-package com.linetra.permwatch
+package com.linetra.permalerts
 
 import android.Manifest
 import android.content.Intent
@@ -22,13 +22,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import com.linetra.permwatch.ui.AppScaffold
-import com.linetra.permwatch.ui.History
-import com.linetra.permwatch.ui.Intro
-import com.linetra.permwatch.ui.MainViewModel
-import com.linetra.permwatch.ui.Settings
-import com.linetra.permwatch.ui.theme.LocalHolo
-import com.linetra.permwatch.ui.theme.PermWatchTheme
+import com.linetra.permalerts.ui.AppScaffold
+import com.linetra.permalerts.ui.History
+import com.linetra.permalerts.ui.Intro
+import com.linetra.permalerts.ui.MainViewModel
+import com.linetra.permalerts.ui.Settings
+import com.linetra.permalerts.ui.theme.LocalHolo
+import com.linetra.permalerts.ui.theme.PermWatchTheme
 
 class MainActivity : ComponentActivity() {
 

@@ -1,4 +1,4 @@
-package com.linetra.permwatch.notify
+package com.linetra.permalerts.notify
 
 import android.Manifest
 import android.app.NotificationChannel
@@ -13,10 +13,10 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
-import com.linetra.permwatch.MainActivity
-import com.linetra.permwatch.R
-import com.linetra.permwatch.data.FlaggedApp
-import com.linetra.permwatch.data.SensitivePermissions
+import com.linetra.permalerts.MainActivity
+import com.linetra.permalerts.R
+import com.linetra.permalerts.data.FlaggedApp
+import com.linetra.permalerts.data.SensitivePermissions
 
 class AlertNotifier(private val context: Context) {
 

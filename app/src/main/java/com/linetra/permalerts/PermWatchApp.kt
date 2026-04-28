@@ -1,9 +1,9 @@
-package com.linetra.permwatch
+package com.linetra.permalerts
 
 import android.app.Application
-import com.linetra.permwatch.data.PermsStore
-import com.linetra.permwatch.notify.AlertNotifier
-import com.linetra.permwatch.worker.ScanScheduler
+import com.linetra.permalerts.data.PermsStore
+import com.linetra.permalerts.notify.AlertNotifier
+import com.linetra.permalerts.worker.ScanScheduler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob

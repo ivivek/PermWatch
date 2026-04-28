@@ -57,7 +57,7 @@ case $ACTION in
         ./gradlew installDevDebug
         echo ""
         echo "Launching app..."
-        adb shell am start -n com.linetra.permwatch.dev/com.linetra.permwatch.MainActivity
+        adb shell am start -n com.linetra.permalerts.dev/com.linetra.permalerts.MainActivity
         ;;
     clean)
         echo "Cleaning build artifacts..."

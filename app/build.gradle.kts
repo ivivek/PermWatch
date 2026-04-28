@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.linetra.permwatch"
+    namespace = "com.linetra.permalerts"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.linetra.permwatch"
+        applicationId = "com.linetra.permalerts"
         minSdk = 26
         targetSdk = 35
         versionCode = 1
