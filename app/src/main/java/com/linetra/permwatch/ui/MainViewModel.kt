@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.linetra.permwatch.data.AlertDiff
 import com.linetra.permwatch.data.InstalledAppPerms
+import com.linetra.permwatch.data.PermEvent
 import com.linetra.permwatch.data.PermsStore
 import com.linetra.permwatch.data.SensitivePermissions
 import com.linetra.permwatch.notify.AlertNotifier
@@ -19,6 +20,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -67,6 +69,24 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     /** User-chosen scan cadence in seconds. Defaults to PermsStore.DEFAULT_INTERVAL_SECONDS. */
     val intervalSeconds: StateFlow<Long> = store.intervalSeconds
         .stateIn(viewModelScope, SharingStarted.Eagerly, PermsStore.DEFAULT_INTERVAL_SECONDS)
+
+    /** Newest-first stream of permission state changes recorded across scans. */
+    val events: StateFlow<List<PermEvent>> = store.events
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    /** Number of events newer than the user's last History visit — drives the bell badge. */
+    val unreadEventCount: StateFlow<Int> = combine(store.events, store.lastSeenEventTs) { evs, seen ->
+        evs.count { it.tsMillis > seen }
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, 0)
+
+    /** Bump the last-seen pointer to the newest event so the badge clears. Called when History
+     *  opens. No-op when there are no events. */
+    fun markEventsRead() {
+        viewModelScope.launch {
+            val newest = store.currentEvents().firstOrNull()?.tsMillis ?: return@launch
+            store.setLastSeenEventTs(newest)
+        }
+    }
 
     /** Apps the user has muted via the per-card toggle. Drives the Settings management sheet —
      *  only includes apps still present in the latest scan (orphans drop out naturally). */
@@ -123,7 +143,13 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         _state.value = _state.value.copy(loading = true)
         val apps = withContext(Dispatchers.IO) { scanner.scanAll() }
 
-        store.pruneBaselineToCurrent(AlertDiff.currentGrantsMap(apps))
+        val grantsMap = AlertDiff.currentGrantsMap(apps)
+        store.recordEventsForScan(
+            current = grantsMap,
+            labelLookup = apps.associate { it.packageName to it.label },
+            systemLookup = apps.associate { it.packageName to it.isSystem },
+        )
+        store.pruneBaselineToCurrent(grantsMap)
 
         val baseline = store.currentBaseline()
         val ignored = store.currentIgnored()

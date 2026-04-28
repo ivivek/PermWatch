@@ -23,6 +23,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.linetra.permwatch.ui.AppScaffold
+import com.linetra.permwatch.ui.History
 import com.linetra.permwatch.ui.Intro
 import com.linetra.permwatch.ui.MainViewModel
 import com.linetra.permwatch.ui.Settings
@@ -102,34 +103,54 @@ class MainActivity : ComponentActivity() {
                         true -> {
                             val state by vm.state.collectAsState()
                             var settingsOpen by rememberSaveable { mutableStateOf(false) }
+                            var historyOpen by rememberSaveable { mutableStateOf(false) }
                             LaunchedEffect(Unit) {
-                                vm.scrollToAlert.collect { settingsOpen = false }
+                                vm.scrollToAlert.collect {
+                                    settingsOpen = false
+                                    historyOpen = false
+                                }
                             }
-                            if (settingsOpen) {
-                                val unwatched by vm.unwatched.collectAsState()
-                                val intervalSeconds by vm.intervalSeconds.collectAsState()
-                                val ignoredApps by vm.ignoredApps.collectAsState()
-                                BackHandler { settingsOpen = false }
-                                Settings(
-                                    unwatched = unwatched,
-                                    intervalSeconds = intervalSeconds,
-                                    ignoredApps = ignoredApps,
-                                    onSetWatched = { perm, watched -> vm.setWatched(perm, watched) },
-                                    onSetInterval = { seconds -> vm.setIntervalSeconds(seconds) },
-                                    onSetIgnored = { pkg, ignored -> vm.toggleIgnore(pkg, ignored) },
-                                    onBack = { settingsOpen = false },
-                                )
-                            } else {
-                                AppScaffold(
-                                    state = state,
-                                    onRescan = { vm.refresh() },
-                                    onAcceptApp = { pkg -> vm.acceptApp(pkg) },
-                                    onAcceptAll = { vm.acceptAll() },
-                                    onToggleIgnore = { pkg, ignored -> vm.toggleIgnore(pkg, ignored) },
-                                    onManage = { pkg -> openAppDetailsSettings(pkg) },
-                                    onOpenSettings = { settingsOpen = true },
-                                    scrollToAlert = vm.scrollToAlert,
-                                )
+                            when {
+                                settingsOpen -> {
+                                    val unwatched by vm.unwatched.collectAsState()
+                                    val intervalSeconds by vm.intervalSeconds.collectAsState()
+                                    val ignoredApps by vm.ignoredApps.collectAsState()
+                                    BackHandler { settingsOpen = false }
+                                    Settings(
+                                        unwatched = unwatched,
+                                        intervalSeconds = intervalSeconds,
+                                        ignoredApps = ignoredApps,
+                                        onSetWatched = { perm, watched -> vm.setWatched(perm, watched) },
+                                        onSetInterval = { seconds -> vm.setIntervalSeconds(seconds) },
+                                        onSetIgnored = { pkg, ignored -> vm.toggleIgnore(pkg, ignored) },
+                                        onBack = { settingsOpen = false },
+                                    )
+                                }
+                                historyOpen -> {
+                                    val events by vm.events.collectAsState()
+                                    LaunchedEffect(Unit) { vm.markEventsRead() }
+                                    BackHandler { historyOpen = false }
+                                    History(
+                                        events = events,
+                                        onManage = { pkg -> openAppDetailsSettings(pkg) },
+                                        onBack = { historyOpen = false },
+                                    )
+                                }
+                                else -> {
+                                    val unreadCount by vm.unreadEventCount.collectAsState()
+                                    AppScaffold(
+                                        state = state,
+                                        onRescan = { vm.refresh() },
+                                        onAcceptApp = { pkg -> vm.acceptApp(pkg) },
+                                        onAcceptAll = { vm.acceptAll() },
+                                        onToggleIgnore = { pkg, ignored -> vm.toggleIgnore(pkg, ignored) },
+                                        onManage = { pkg -> openAppDetailsSettings(pkg) },
+                                        onOpenSettings = { settingsOpen = true },
+                                        onOpenHistory = { historyOpen = true },
+                                        unreadEventCount = unreadCount,
+                                        scrollToAlert = vm.scrollToAlert,
+                                    )
+                                }
                             }
                         }
                     }

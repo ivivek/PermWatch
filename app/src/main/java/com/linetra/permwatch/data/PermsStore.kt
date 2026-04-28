@@ -54,6 +54,54 @@ class PermsStore(context: Context) {
         ds.edit { it[KEY_INTERVAL_SECONDS] = seconds }
     }
 
+    /** Per-package set of *all* sensitive perms granted at the previous scan. Diffed against the
+     *  next scan's grants to produce [PermEvent]s. Distinct from [baseline] — baseline tracks
+     *  user-acknowledged grants; snapshot tracks raw OS state. */
+    val lastSnapshot: Flow<Map<String, Set<String>>> =
+        ds.data.map { decodePkgPermMap(it[KEY_LAST_SNAPSHOT]) }
+    suspend fun currentLastSnapshot(): Map<String, Set<String>> = lastSnapshot.first()
+
+    /** Bounded history of permission state changes, newest-last in storage. The Flow re-orders
+     *  to newest-first for UI consumption. */
+    val events: Flow<List<PermEvent>> =
+        ds.data.map { EventLogEncoding.decode(it[KEY_EVENTS]).asReversed() }
+    suspend fun currentEvents(): List<PermEvent> = events.first()
+
+    /** Timestamp (ms) of the newest event the user has seen — anything strictly newer is unread.
+     *  Bumped to the latest event's ts when the History screen opens. */
+    val lastSeenEventTs: Flow<Long> = ds.data.map { it[KEY_LAST_SEEN_EVENT_TS] ?: 0L }
+    suspend fun setLastSeenEventTs(ts: Long) {
+        ds.edit { it[KEY_LAST_SEEN_EVENT_TS] = ts }
+    }
+
+    /**
+     * Diff [current] vs the stored snapshot, append any resulting events (capped at
+     * [EVENT_LOG_CAP]), and replace the snapshot. Skips event emission on the very first call
+     * after install/update — there's no prior snapshot to diff against, and we don't want to
+     * synthesize a flood of GRANTED events for every existing grant. [labelLookup] /
+     * [systemLookup] supply display data for [PermEvent.label] / [PermEvent.isSystem].
+     */
+    suspend fun recordEventsForScan(
+        current: Map<String, Set<String>>,
+        labelLookup: Map<String, String>,
+        systemLookup: Map<String, Boolean>,
+        nowMillis: Long = System.currentTimeMillis(),
+    ) {
+        ds.edit {
+            val prevRaw = it[KEY_LAST_SNAPSHOT]
+            it[KEY_LAST_SNAPSHOT] = encodePkgPermMap(current)
+            if (prevRaw.isNullOrEmpty()) return@edit
+            val prev = decodePkgPermMap(prevRaw)
+            val newEvents = EventDiff.diff(prev, current, labelLookup, systemLookup, nowMillis)
+            if (newEvents.isEmpty()) return@edit
+            val existing = EventLogEncoding.decode(it[KEY_EVENTS])
+            val combined = (existing + newEvents).let { all ->
+                if (all.size <= EVENT_LOG_CAP) all else all.subList(all.size - EVENT_LOG_CAP, all.size)
+            }
+            it[KEY_EVENTS] = EventLogEncoding.encode(combined)
+        }
+    }
+
     suspend fun setOnboarded(value: Boolean) {
         ds.edit { it[KEY_ONBOARDED] = value }
     }
@@ -128,8 +176,12 @@ class PermsStore(context: Context) {
         private val KEY_UNWATCHED = stringPreferencesKey("unwatched_v1")
         private val KEY_LAST_ALERT_COUNT = intPreferencesKey("last_alert_count")
         private val KEY_INTERVAL_SECONDS = longPreferencesKey("interval_seconds")
+        private val KEY_LAST_SNAPSHOT = stringPreferencesKey("last_snapshot_v1")
+        private val KEY_EVENTS = stringPreferencesKey("events_v1")
+        private val KEY_LAST_SEEN_EVENT_TS = longPreferencesKey("last_seen_event_ts")
 
         const val DEFAULT_INTERVAL_SECONDS: Long = 900L
+        const val EVENT_LOG_CAP: Int = 500
 
         // Encoding: pkg|perm1,perm2\npkg2|perm3  — newlines/pipes/commas are not legal in permission names or package names
         fun encodePkgPermMap(map: Map<String, Set<String>>): String =

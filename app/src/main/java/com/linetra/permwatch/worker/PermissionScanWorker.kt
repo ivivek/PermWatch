@@ -26,7 +26,13 @@ class PermissionScanWorker(
         val scanner = PermissionScanner(ctx)
         val apps = scanner.scanAll()
 
-        store.pruneBaselineToCurrent(AlertDiff.currentGrantsMap(apps))
+        val grantsMap = AlertDiff.currentGrantsMap(apps)
+        store.recordEventsForScan(
+            current = grantsMap,
+            labelLookup = apps.associate { it.packageName to it.label },
+            systemLookup = apps.associate { it.packageName to it.isSystem },
+        )
+        store.pruneBaselineToCurrent(grantsMap)
 
         val baseline = store.currentBaseline()
         val ignored = store.currentIgnored()
