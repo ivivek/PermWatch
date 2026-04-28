@@ -1,5 +1,6 @@
 package com.linetra.permwatch.ui
 
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -31,6 +32,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -38,9 +44,11 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -80,24 +88,63 @@ fun AppScaffold(
 ) {
     val statusBars = WindowInsets.statusBars.asPaddingValues()
     val navBars = WindowInsets.navigationBars.asPaddingValues()
+    val palette = LocalHolo.current
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(top = statusBars.calculateTopPadding()),
-    ) {
-        MainHeader(onRescan = onRescan, scanning = state.loading, onOpenSettings = onOpenSettings)
+    // Wrap the toggle so ignoring (true) shows a snackbar with Undo. Re-watching skips the
+    // snackbar — the action itself is the undo path (e.g. Settings → Ignored apps).
+    val handleToggleIgnore: (String, Boolean) -> Unit = { pkg, ignored ->
+        onToggleIgnore(pkg, ignored)
+        if (ignored) {
+            val label = state.rows.firstOrNull { it.packageName == pkg }?.label ?: pkg
+            scope.launch {
+                val result = snackbarHostState.showSnackbar(
+                    message = "Ignored $label",
+                    actionLabel = "Undo",
+                    withDismissAction = false,
+                    duration = SnackbarDuration.Short,
+                )
+                if (result == SnackbarResult.ActionPerformed) {
+                    onToggleIgnore(pkg, false)
+                }
+            }
+        }
+    }
 
-        if (state.loading && state.rows.isEmpty()) {
-            LoadingList()
-        } else {
-            AppListWithTabs(
-                state = state,
-                onAcceptApp = onAcceptApp,
-                onAcceptAll = onAcceptAll,
-                onToggleIgnore = onToggleIgnore,
-                onManage = onManage,
-                bottomInset = navBars.calculateBottomPadding(),
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = statusBars.calculateTopPadding()),
+        ) {
+            MainHeader(onRescan = onRescan, scanning = state.loading, onOpenSettings = onOpenSettings)
+
+            if (state.loading && state.rows.isEmpty()) {
+                LoadingList()
+            } else {
+                AppListWithTabs(
+                    state = state,
+                    onAcceptApp = onAcceptApp,
+                    onAcceptAll = onAcceptAll,
+                    onToggleIgnore = handleToggleIgnore,
+                    onManage = onManage,
+                    bottomInset = navBars.calculateBottomPadding(),
+                )
+            }
+        }
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = navBars.calculateBottomPadding() + 8.dp),
+        ) { data ->
+            Snackbar(
+                snackbarData = data,
+                containerColor = palette.surfaceHi,
+                contentColor = palette.ink,
+                actionColor = palette.accentA,
+                shape = RoundedCornerShape(12.dp),
             )
         }
     }
@@ -231,8 +278,10 @@ private fun AppListWithTabs(
     onManage: (String) -> Unit,
     bottomInset: androidx.compose.ui.unit.Dp,
 ) {
-    val userApps = remember(state.rows) { state.rows.filter { !it.isSystem } }
-    val systemApps = remember(state.rows) { state.rows.filter { it.isSystem } }
+    // Ignored apps are managed from Settings → Ignored apps. They never appear in the main
+    // feed — the feed is the signal stream, ignoring something clears it.
+    val userApps = remember(state.rows) { state.rows.filter { !it.isSystem && !it.isIgnored } }
+    val systemApps = remember(state.rows) { state.rows.filter { it.isSystem && !it.isIgnored } }
     var selected by rememberSaveable { mutableStateOf(TabId.User) }
 
     var groupFilters by rememberSaveable(saver = PermFilterSaver) { mutableStateOf(emptySet<String>()) }
@@ -287,6 +336,11 @@ private fun AppListWithTabs(
                 items(visible, key = { it.packageName }) { row ->
                     AppCard(
                         row = row,
+                        modifier = Modifier.animateItem(
+                            fadeInSpec = tween(durationMillis = 280, easing = FastOutSlowInEasing),
+                            fadeOutSpec = tween(durationMillis = 420, easing = FastOutSlowInEasing),
+                            placementSpec = tween(durationMillis = 360, easing = FastOutSlowInEasing),
+                        ),
                         onAccept = { onAcceptApp(row.packageName) },
                         onToggleIgnore = { ignored -> onToggleIgnore(row.packageName, ignored) },
                         onManage = { onManage(row.packageName) },
@@ -703,6 +757,7 @@ private fun AppCard(
     onAccept: () -> Unit,
     onToggleIgnore: (Boolean) -> Unit,
     onManage: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val palette = LocalHolo.current
     val hasAlert = row.hasAlert
@@ -720,7 +775,7 @@ private fun AppCard(
     } else null
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .let { if (ignored) it.alpha(0.5f) else it },
     ) {

@@ -58,7 +58,8 @@ com.linetra.permwatch
     ├── Intro.kt                  3-slide first-run onboarding (Signal/Change/You)
     ├── Settings.kt               Per-permission watch toggles + "How often"
     │                             summary row → ModalBottomSheet picker
-    │                             (ScanCadence.presets)
+    │                             (ScanCadence.presets) + "Ignored apps"
+    │                             summary row → sheet to re-watch muted apps
     ├── Screens.kt                Hero + AlertStrip + Tabs + AppCard + chips + buttons
     ├── atoms/
     │   ├── Iris.kt               Animated sweep-gradient ring (configurable size/speed/still)
@@ -163,6 +164,25 @@ Adding a new sensitive permission: append to `SensitivePermissions.all` with
 the right category and (if applicable) `isAppOp`/`isAccessibility` flag. It
 becomes watched-by-default (any user not in `unwatched`) and shows up in the
 Settings list automatically.
+
+### Ignoring apps
+
+The `WatchToggle` on each card mutes a single package — writes the package name
+into `PermsStore.ignored`, which `AlertDiff` and `MainViewModel.toRows` both
+filter out. Ignored apps **disappear from the main feed entirely** (the feed is
+the signal stream — once you've reacted to a signal, it should clear). Tapping
+ignore from a card shows a 5s "Ignored {label} · Undo" snackbar
+(`SnackbarHost` in `AppScaffold`) so accidents are recoverable in the moment.
+After that, the only way to re-watch is **Settings → Ignored apps**, a summary
+row that opens a `ModalBottomSheet` listing every currently-ignored app still
+present in the latest scan; toggling its switch routes through
+`MainViewModel.toggleIgnore(pkg, false)`. The Settings sheet is skipped by the
+snackbar wrapper — re-watching there *is* the undo, no need for a redundant
+toast.
+
+`MainViewModel.ignoredApps` is derived from `state.rows` (filtered to
+`isIgnored`), so orphan entries (apps that were ignored then uninstalled) are
+invisible in the sheet — they sit in the DataStore inertly.
 
 ### No auto-revoke, by design
 

@@ -1,5 +1,7 @@
 package com.linetra.permwatch.ui
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -19,6 +21,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -53,8 +56,10 @@ import com.linetra.permwatch.worker.ScanCadence
 fun Settings(
     unwatched: Set<String>,
     intervalSeconds: Long,
+    ignoredApps: List<IgnoredApp>,
     onSetWatched: (String, Boolean) -> Unit,
     onSetInterval: (Long) -> Unit,
+    onSetIgnored: (String, Boolean) -> Unit,
     onBack: () -> Unit,
 ) {
     val palette = LocalHolo.current
@@ -63,6 +68,7 @@ fun Settings(
 
     val grouped = remember { SensitivePermissions.all.groupBy { it.category } }
     var cadenceSheetOpen by rememberSaveable { mutableStateOf(false) }
+    var ignoredSheetOpen by rememberSaveable { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -84,6 +90,13 @@ fun Settings(
                 CadenceSummaryRow(
                     intervalSeconds = intervalSeconds,
                     onClick = { cadenceSheetOpen = true },
+                )
+            }
+            item(key = "head-ignored") { SectionHeader(title = "Ignored apps") }
+            item(key = "card-ignored") {
+                IgnoredSummaryRow(
+                    count = ignoredApps.size,
+                    onClick = { ignoredSheetOpen = true },
                 )
             }
             PermissionCategory.values().forEach { cat ->
@@ -111,6 +124,14 @@ fun Settings(
                 cadenceSheetOpen = false
             },
             onDismiss = { cadenceSheetOpen = false },
+        )
+    }
+
+    if (ignoredSheetOpen) {
+        IgnoredAppsSheet(
+            apps = ignoredApps,
+            onRewatch = { pkg -> onSetIgnored(pkg, false) },
+            onDismiss = { ignoredSheetOpen = false },
         )
     }
 }
@@ -425,6 +446,153 @@ private fun CadencePresetRow(
         )
         Spacer(Modifier.width(12.dp))
         RadioDot(selected = selected)
+    }
+}
+
+@Composable
+private fun IgnoredSummaryRow(count: Int, onClick: () -> Unit) {
+    val palette = LocalHolo.current
+    val label = when (count) {
+        0 -> "None"
+        1 -> "1 app"
+        else -> "$count apps"
+    }
+    Glass(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick)
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = label,
+                color = if (count == 0) palette.inkMute else palette.ink,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.weight(1f),
+            )
+            Spacer(Modifier.width(12.dp))
+            ChevronRightGlyph(color = palette.inkSoft)
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun IgnoredAppsSheet(
+    apps: List<IgnoredApp>,
+    onRewatch: (String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val palette = LocalHolo.current
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val navBars = WindowInsets.navigationBars.asPaddingValues()
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = palette.bgDeep,
+        contentColor = palette.ink,
+        contentWindowInsets = { WindowInsets.statusBars },
+        dragHandle = {
+            Box(
+                modifier = Modifier
+                    .padding(top = 10.dp, bottom = 6.dp)
+                    .size(width = 36.dp, height = 4.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(palette.stroke),
+            )
+        },
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = navBars.calculateBottomPadding()),
+        ) {
+            Text(
+                text = "IGNORED APPS",
+                color = palette.inkSoft,
+                fontFamily = Mono,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Medium,
+                letterSpacing = 2.sp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 4.dp),
+            )
+            LazyColumn(
+                modifier = Modifier.fillMaxWidth(),
+                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                if (apps.isEmpty()) {
+                    item(key = "empty") {
+                        Text(
+                            text = "Nothing ignored. Use the toggle on any app card to mute it \u2014 it will move here.",
+                            color = palette.inkSoft,
+                            fontSize = 12.sp,
+                            lineHeight = 17.sp,
+                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 12.dp),
+                        )
+                    }
+                } else {
+                    items(apps, key = { it.packageName }) { app ->
+                        Glass(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .animateItem(
+                                    fadeInSpec = tween(durationMillis = 280, easing = FastOutSlowInEasing),
+                                    fadeOutSpec = tween(durationMillis = 420, easing = FastOutSlowInEasing),
+                                    placementSpec = tween(durationMillis = 360, easing = FastOutSlowInEasing),
+                                ),
+                        ) {
+                            IgnoredAppRow(app = app, onRewatch = { onRewatch(app.packageName) })
+                        }
+                    }
+                    item(key = "caption") {
+                        Text(
+                            text = "Toggle on to resume watching. The app will reappear in the main feed if it holds any watched permissions.",
+                            color = palette.inkMute,
+                            fontSize = 11.sp,
+                            lineHeight = 16.sp,
+                            modifier = Modifier
+                                .padding(horizontal = 4.dp, vertical = 6.dp),
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun IgnoredAppRow(app: IgnoredApp, onRewatch: () -> Unit) {
+    val palette = LocalHolo.current
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onRewatch)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(
+                text = app.label,
+                color = palette.ink,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                text = app.packageName,
+                color = palette.inkMute,
+                fontFamily = Mono,
+                fontSize = 10.sp,
+            )
+        }
+        Spacer(Modifier.width(12.dp))
+        ToggleSwitch(on = false)
     }
 }
 

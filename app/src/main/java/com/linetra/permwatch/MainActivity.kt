@@ -75,12 +75,15 @@ class MainActivity : ComponentActivity() {
                             if (settingsOpen) {
                                 val unwatched by vm.unwatched.collectAsState()
                                 val intervalSeconds by vm.intervalSeconds.collectAsState()
+                                val ignoredApps by vm.ignoredApps.collectAsState()
                                 BackHandler { settingsOpen = false }
                                 Settings(
                                     unwatched = unwatched,
                                     intervalSeconds = intervalSeconds,
+                                    ignoredApps = ignoredApps,
                                     onSetWatched = { perm, watched -> vm.setWatched(perm, watched) },
                                     onSetInterval = { seconds -> vm.setIntervalSeconds(seconds) },
+                                    onSetIgnored = { pkg, ignored -> vm.toggleIgnore(pkg, ignored) },
                                     onBack = { settingsOpen = false },
                                 )
                             } else {

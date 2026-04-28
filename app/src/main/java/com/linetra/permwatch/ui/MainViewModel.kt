@@ -38,6 +38,8 @@ data class UiState(
     val alertCount: Int get() = rows.count { it.hasAlert }
 }
 
+data class IgnoredApp(val packageName: String, val label: String)
+
 class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     private val scanner = PermissionScanner(app)
@@ -61,6 +63,19 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     /** User-chosen scan cadence in seconds. Defaults to PermsStore.DEFAULT_INTERVAL_SECONDS. */
     val intervalSeconds: StateFlow<Long> = store.intervalSeconds
         .stateIn(viewModelScope, SharingStarted.Eagerly, PermsStore.DEFAULT_INTERVAL_SECONDS)
+
+    /** Apps the user has muted via the per-card toggle. Drives the Settings management sheet —
+     *  only includes apps still present in the latest scan (orphans drop out naturally). */
+    val ignoredApps: StateFlow<List<IgnoredApp>> = state
+        .map { ui ->
+            ui.rows
+                .asSequence()
+                .filter { it.isIgnored }
+                .map { IgnoredApp(it.packageName, it.label) }
+                .sortedBy { it.label.lowercase() }
+                .toList()
+        }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     fun refresh() {
         viewModelScope.launch {
