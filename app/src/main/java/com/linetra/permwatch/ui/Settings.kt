@@ -21,9 +21,16 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -40,11 +47,14 @@ import com.linetra.permwatch.ui.atoms.Glass
 import com.linetra.permwatch.ui.atoms.Iris
 import com.linetra.permwatch.ui.theme.LocalHolo
 import com.linetra.permwatch.ui.theme.Mono
+import com.linetra.permwatch.worker.ScanCadence
 
 @Composable
 fun Settings(
     unwatched: Set<String>,
+    intervalSeconds: Long,
     onSetWatched: (String, Boolean) -> Unit,
+    onSetInterval: (Long) -> Unit,
     onBack: () -> Unit,
 ) {
     val palette = LocalHolo.current
@@ -52,6 +62,7 @@ fun Settings(
     val navBars = WindowInsets.navigationBars.asPaddingValues()
 
     val grouped = remember { SensitivePermissions.all.groupBy { it.category } }
+    var cadenceSheetOpen by rememberSaveable { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -68,6 +79,13 @@ fun Settings(
             verticalArrangement = Arrangement.spacedBy(18.dp),
         ) {
             item { Intro(palette = palette) }
+            item(key = "head-cadence") { SectionHeader(title = "How often") }
+            item(key = "card-cadence") {
+                CadenceSummaryRow(
+                    intervalSeconds = intervalSeconds,
+                    onClick = { cadenceSheetOpen = true },
+                )
+            }
             PermissionCategory.values().forEach { cat ->
                 val perms = grouped[cat].orEmpty()
                 if (perms.isEmpty()) return@forEach
@@ -83,6 +101,17 @@ fun Settings(
                 }
             }
         }
+    }
+
+    if (cadenceSheetOpen) {
+        CadenceSheet(
+            intervalSeconds = intervalSeconds,
+            onSelect = { seconds ->
+                onSetInterval(seconds)
+                cadenceSheetOpen = false
+            },
+            onDismiss = { cadenceSheetOpen = false },
+        )
     }
 }
 
@@ -243,6 +272,188 @@ private fun PermRow(
         }
         Spacer(Modifier.width(12.dp))
         ToggleSwitch(on = watched)
+    }
+}
+
+@Composable
+private fun CadenceSummaryRow(intervalSeconds: Long, onClick: () -> Unit) {
+    val palette = LocalHolo.current
+    val label = ScanCadence.presets.firstOrNull { it.seconds == intervalSeconds }?.label
+        ?: "${intervalSeconds}s"
+    Glass(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick)
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = label,
+                color = palette.ink,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.weight(1f),
+            )
+            Spacer(Modifier.width(12.dp))
+            ChevronRightGlyph(color = palette.inkSoft)
+        }
+    }
+}
+
+@Composable
+private fun ChevronRightGlyph(color: Color) {
+    androidx.compose.foundation.Canvas(modifier = Modifier.size(14.dp)) {
+        val stroke = androidx.compose.ui.graphics.drawscope.Stroke(
+            width = 1.4.dp.toPx(),
+            cap = androidx.compose.ui.graphics.StrokeCap.Round,
+            join = androidx.compose.ui.graphics.StrokeJoin.Round,
+        )
+        val path = androidx.compose.ui.graphics.Path().apply {
+            moveTo(size.width * 0.32f, size.height * 0.20f)
+            lineTo(size.width * 0.70f, size.height * 0.50f)
+            lineTo(size.width * 0.32f, size.height * 0.80f)
+        }
+        drawPath(path, color = color, style = stroke)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CadenceSheet(
+    intervalSeconds: Long,
+    onSelect: (Long) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val palette = LocalHolo.current
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val navBars = WindowInsets.navigationBars.asPaddingValues()
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = palette.bgDeep,
+        contentColor = palette.ink,
+        contentWindowInsets = { WindowInsets.statusBars },
+        dragHandle = {
+            Box(
+                modifier = Modifier
+                    .padding(top = 10.dp, bottom = 6.dp)
+                    .size(width = 36.dp, height = 4.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(palette.stroke),
+            )
+        },
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = navBars.calculateBottomPadding()),
+        ) {
+            Text(
+                text = "HOW OFTEN",
+                color = palette.inkSoft,
+                fontFamily = Mono,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Medium,
+                letterSpacing = 2.sp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 4.dp),
+            )
+            LazyColumn(
+                modifier = Modifier.fillMaxWidth(),
+                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
+                item(key = "card") {
+                    Glass(modifier = Modifier.fillMaxWidth()) {
+                        Column {
+                            ScanCadence.presets.forEachIndexed { idx, preset ->
+                                if (idx > 0) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 16.dp)
+                                            .height(0.5.dp)
+                                            .background(palette.stroke),
+                                    )
+                                }
+                                CadencePresetRow(
+                                    preset = preset,
+                                    selected = preset.seconds == intervalSeconds,
+                                    onClick = { onSelect(preset.seconds) },
+                                )
+                            }
+                        }
+                    }
+                }
+                item(key = "caption") {
+                    Text(
+                        text = "Faster cadences use more battery. Android may delay scans on idle devices.",
+                        color = palette.inkMute,
+                        fontSize = 11.sp,
+                        lineHeight = 16.sp,
+                        modifier = Modifier.padding(horizontal = 4.dp),
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CadencePresetRow(
+    preset: ScanCadence.Preset,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    val palette = LocalHolo.current
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = preset.label,
+            color = palette.ink,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.weight(1f),
+        )
+        Spacer(Modifier.width(12.dp))
+        RadioDot(selected = selected)
+    }
+}
+
+@Composable
+private fun RadioDot(selected: Boolean) {
+    val palette = LocalHolo.current
+    Box(
+        modifier = Modifier
+            .size(20.dp)
+            .clip(CircleShape)
+            .background(
+                if (selected) Brush.linearGradient(listOf(palette.accentA, palette.accentC))
+                else Brush.linearGradient(
+                    listOf(
+                        if (palette.isDark) Color.White.copy(alpha = 0.06f) else palette.bgDeep,
+                        if (palette.isDark) Color.White.copy(alpha = 0.06f) else palette.bgDeep,
+                    ),
+                ),
+            ),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (selected) {
+            Box(
+                modifier = Modifier
+                    .size(7.dp)
+                    .clip(CircleShape)
+                    .background(palette.bgDeep),
+            )
+        }
     }
 }
 

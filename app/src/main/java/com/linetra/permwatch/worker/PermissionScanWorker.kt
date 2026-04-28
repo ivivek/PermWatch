@@ -19,7 +19,7 @@ class PermissionScanWorker(
         val store = PermsStore(ctx)
 
         if (!store.isOnboarded()) {
-            ScanScheduler.scheduleNext(ctx)
+            ScanScheduler.scheduleNext(ctx, store.currentIntervalSeconds())
             return Result.success()
         }
 
@@ -39,7 +39,7 @@ class PermissionScanWorker(
         notifier.updateSummary(flagged, previousCount)
         store.setLastAlertCount(flagged.size)
 
-        ScanScheduler.scheduleNext(ctx)
+        ScanScheduler.scheduleNext(ctx, store.currentIntervalSeconds())
         return Result.success()
     }
 }

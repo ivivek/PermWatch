@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
@@ -45,6 +46,12 @@ class PermsStore(context: Context) {
     suspend fun currentLastAlertCount(): Int = lastAlertCount.first()
     suspend fun setLastAlertCount(count: Int) {
         ds.edit { it[KEY_LAST_ALERT_COUNT] = count }
+    }
+
+    val intervalSeconds: Flow<Long> = ds.data.map { it[KEY_INTERVAL_SECONDS] ?: DEFAULT_INTERVAL_SECONDS }
+    suspend fun currentIntervalSeconds(): Long = intervalSeconds.first()
+    suspend fun setIntervalSeconds(seconds: Long) {
+        ds.edit { it[KEY_INTERVAL_SECONDS] = seconds }
     }
 
     suspend fun setOnboarded(value: Boolean) {
@@ -120,6 +127,9 @@ class PermsStore(context: Context) {
         private val KEY_IGNORED = stringPreferencesKey("ignored_v1")
         private val KEY_UNWATCHED = stringPreferencesKey("unwatched_v1")
         private val KEY_LAST_ALERT_COUNT = intPreferencesKey("last_alert_count")
+        private val KEY_INTERVAL_SECONDS = longPreferencesKey("interval_seconds")
+
+        const val DEFAULT_INTERVAL_SECONDS: Long = 900L
 
         // Encoding: pkg|perm1,perm2\npkg2|perm3  — newlines/pipes/commas are not legal in permission names or package names
         fun encodePkgPermMap(map: Map<String, Set<String>>): String =

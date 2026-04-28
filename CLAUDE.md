@@ -40,21 +40,25 @@ com.linetra.permwatch
 │   │                             watchedSet(unwatched) helper
 │   ├── InstalledAppPerms.kt      Scanner output model
 │   ├── PermsStore.kt             DataStore ("perms") — baseline, ignored set,
-│   │                             unwatched perms, onboarded flag, lastAlertCount
+│   │                             unwatched perms, onboarded flag, lastAlertCount,
+│   │                             intervalSeconds (scan cadence)
 │   └── AlertDiff.kt              Pure-function diff: current ∩ watched − baseline
 │                                 − ignored → FlaggedApp list
 ├── scanner/PermissionScanner.kt  PackageManager + AppOpsManager + Settings.Secure
 ├── worker/
 │   ├── PermissionScanWorker.kt   CoroutineWorker — prune + scan + notify + schedule next
-│   └── ScanScheduler.kt          Self-chaining OneTimeWorkRequest wrapper
+│   └── ScanScheduler.kt          Self-chaining OneTimeWorkRequest wrapper +
+│                                 ScanCadence presets (1m → Daily)
 ├── notify/AlertNotifier.kt       HIGH-importance channel (perm_alerts_v2); heads-up only
 │                                 when count escalates; large Iris icon + accent tint
 └── ui/
     ├── MainViewModel.kt          AndroidViewModel — refresh/accept/ignore +
-    │                             activate + setWatched (with silent re-baseline)
+    │                             activate + setWatched (with silent re-baseline) +
+    │                             setIntervalSeconds (persists + reschedules)
     ├── Intro.kt                  3-slide first-run onboarding (Signal/Change/You)
-    ├── Settings.kt               Per-permission watch toggles, grouped by the
-    │                             4 SensitivePermissions categories
+    ├── Settings.kt               Per-permission watch toggles + "How often"
+    │                             summary row → ModalBottomSheet picker
+    │                             (ScanCadence.presets)
     ├── Screens.kt                Hero + AlertStrip + Tabs + AppCard + chips + buttons
     ├── atoms/
     │   ├── Iris.kt               Animated sweep-gradient ring (configurable size/speed/still)
@@ -130,12 +134,18 @@ opts in, not on `onCreate`.
 
 ### Scheduling
 
-Android's `PeriodicWorkRequest` floor is 15 minutes. For faster testing and
-near-realtime alerts, `ScanScheduler` uses a **self-chaining
-`OneTimeWorkRequest`** — the worker re-enqueues itself at the end of
-`doWork()`. Interval lives in `ScanScheduler.INTERVAL_SECONDS` (currently 60).
-WorkManager auto-restores the chain after reboot; no `BOOT_COMPLETED` receiver
-needed.
+Android's `PeriodicWorkRequest` floor is 15 minutes. To allow sub-15m cadences,
+`ScanScheduler` uses a **self-chaining `OneTimeWorkRequest`** — the worker
+re-enqueues itself at the end of `doWork()`. Interval is user-configurable
+(persisted in `PermsStore.intervalSeconds`, default
+`PermsStore.DEFAULT_INTERVAL_SECONDS` = 900s = 15m). The user-facing presets
+are in `ScanCadence.presets` (1m → Daily). `PermissionScanWorker` reads the
+current interval from the store before calling
+`ScanScheduler.scheduleNext(ctx, intervalSeconds)`, so changing cadence in
+Settings takes effect at the next tick. `MainViewModel.setIntervalSeconds`
+also calls `scheduleNext` immediately so the change isn't held up by the
+in-flight delay. WorkManager auto-restores the chain after reboot; no
+`BOOT_COMPLETED` receiver needed.
 
 ### How perms are detected
 

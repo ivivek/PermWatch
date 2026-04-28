@@ -74,10 +74,13 @@ class MainActivity : ComponentActivity() {
                             var settingsOpen by rememberSaveable { mutableStateOf(false) }
                             if (settingsOpen) {
                                 val unwatched by vm.unwatched.collectAsState()
+                                val intervalSeconds by vm.intervalSeconds.collectAsState()
                                 BackHandler { settingsOpen = false }
                                 Settings(
                                     unwatched = unwatched,
+                                    intervalSeconds = intervalSeconds,
                                     onSetWatched = { perm, watched -> vm.setWatched(perm, watched) },
+                                    onSetInterval = { seconds -> vm.setIntervalSeconds(seconds) },
                                     onBack = { settingsOpen = false },
                                 )
                             } else {

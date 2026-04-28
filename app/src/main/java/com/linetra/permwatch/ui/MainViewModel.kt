@@ -58,6 +58,10 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     val unwatched: StateFlow<Set<String>> = store.unwatched
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptySet())
 
+    /** User-chosen scan cadence in seconds. Defaults to PermsStore.DEFAULT_INTERVAL_SECONDS. */
+    val intervalSeconds: StateFlow<Long> = store.intervalSeconds
+        .stateIn(viewModelScope, SharingStarted.Eagerly, PermsStore.DEFAULT_INTERVAL_SECONDS)
+
     fun refresh() {
         viewModelScope.launch {
             if (!store.isOnboarded()) return@launch
@@ -83,9 +87,17 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             val apps = withContext(Dispatchers.IO) { scanner.scanAll() }
             store.acceptCurrentAsBaseline(AlertDiff.currentGrantsMap(apps))
-            ScanScheduler.ensureScheduled(getApplication())
+            ScanScheduler.ensureScheduled(getApplication(), store.currentIntervalSeconds())
             store.setOnboarded(true)
             refresh()
+        }
+    }
+
+    /** Persist a new scan cadence and reschedule the chain so the next tick uses it. */
+    fun setIntervalSeconds(seconds: Long) {
+        viewModelScope.launch {
+            store.setIntervalSeconds(seconds)
+            ScanScheduler.scheduleNext(getApplication(), seconds)
         }
     }
 
