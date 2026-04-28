@@ -783,7 +783,7 @@ private fun AppCard(
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        WatchToggle(on = !ignored, onChange = { onToggleIgnore(ignored) })
+                        WatchToggle(on = !ignored, onChange = { onToggleIgnore(!ignored) })
                         Spacer(Modifier.weight(1f))
                         ManageButton(onClick = onManage)
                         if (hasAlert) {
