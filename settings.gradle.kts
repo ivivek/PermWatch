@@ -20,5 +20,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "PermWatch"
+rootProject.name = "PermissionAlerts"
 include(":app")

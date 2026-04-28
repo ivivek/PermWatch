@@ -1,4 +1,4 @@
-package com.linetra.permalerts.scanner
+package com.linetra.permissionalerts.scanner
 
 import android.app.AppOpsManager
 import android.content.Context
@@ -7,8 +7,8 @@ import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.os.Build
 import android.provider.Settings
-import com.linetra.permalerts.data.InstalledAppPerms
-import com.linetra.permalerts.data.SensitivePermissions
+import com.linetra.permissionalerts.data.InstalledAppPerms
+import com.linetra.permissionalerts.data.SensitivePermissions
 
 class PermissionScanner(private val context: Context) {
 

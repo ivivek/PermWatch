@@ -1,4 +1,4 @@
-package com.linetra.permalerts.ui
+package com.linetra.permissionalerts.ui
 
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
@@ -43,14 +43,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.linetra.permalerts.data.PermissionCategory
-import com.linetra.permalerts.data.SensitivePermission
-import com.linetra.permalerts.data.SensitivePermissions
-import com.linetra.permalerts.ui.atoms.Glass
-import com.linetra.permalerts.ui.atoms.Iris
-import com.linetra.permalerts.ui.theme.LocalHolo
-import com.linetra.permalerts.ui.theme.Mono
-import com.linetra.permalerts.worker.ScanCadence
+import com.linetra.permissionalerts.data.PermissionCategory
+import com.linetra.permissionalerts.data.SensitivePermission
+import com.linetra.permissionalerts.data.SensitivePermissions
+import com.linetra.permissionalerts.ui.atoms.Glass
+import com.linetra.permissionalerts.ui.atoms.Iris
+import com.linetra.permissionalerts.ui.theme.LocalHolo
+import com.linetra.permissionalerts.ui.theme.Mono
+import com.linetra.permissionalerts.worker.ScanCadence
 
 @Composable
 fun Settings(
@@ -188,7 +188,7 @@ private fun BackBox(onClick: () -> Unit, color: Color) {
 }
 
 @Composable
-private fun Intro(palette: com.linetra.permalerts.ui.theme.HoloPalette) {
+private fun Intro(palette: com.linetra.permissionalerts.ui.theme.HoloPalette) {
     Column(modifier = Modifier.padding(top = 4.dp, bottom = 4.dp)) {
         Text(
             text = "Choose the signal.",

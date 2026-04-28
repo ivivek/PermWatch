@@ -1,4 +1,4 @@
-package com.linetra.permalerts.ui
+package com.linetra.permissionalerts.ui
 
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
@@ -71,15 +71,15 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.linetra.permalerts.data.PermissionCategory
-import com.linetra.permalerts.data.PermissionGroup
-import com.linetra.permalerts.data.PermissionGroups
-import com.linetra.permalerts.data.SensitivePermissions
-import com.linetra.permalerts.ui.theme.HoloPalette
-import com.linetra.permalerts.ui.atoms.Glass
-import com.linetra.permalerts.ui.atoms.Iris
-import com.linetra.permalerts.ui.theme.LocalHolo
-import com.linetra.permalerts.ui.theme.Mono
+import com.linetra.permissionalerts.data.PermissionCategory
+import com.linetra.permissionalerts.data.PermissionGroup
+import com.linetra.permissionalerts.data.PermissionGroups
+import com.linetra.permissionalerts.data.SensitivePermissions
+import com.linetra.permissionalerts.ui.theme.HoloPalette
+import com.linetra.permissionalerts.ui.atoms.Glass
+import com.linetra.permissionalerts.ui.atoms.Iris
+import com.linetra.permissionalerts.ui.theme.LocalHolo
+import com.linetra.permissionalerts.ui.theme.Mono
 
 private enum class TabId(val label: String) { User("User"), System("System") }
 

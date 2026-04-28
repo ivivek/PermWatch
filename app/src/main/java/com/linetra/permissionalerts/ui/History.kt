@@ -1,4 +1,4 @@
-package com.linetra.permalerts.ui
+package com.linetra.permissionalerts.ui
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -38,13 +38,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.linetra.permalerts.data.EventKind
-import com.linetra.permalerts.data.PermEvent
-import com.linetra.permalerts.data.SensitivePermissions
-import com.linetra.permalerts.ui.atoms.Glass
-import com.linetra.permalerts.ui.atoms.Iris
-import com.linetra.permalerts.ui.theme.LocalHolo
-import com.linetra.permalerts.ui.theme.Mono
+import com.linetra.permissionalerts.data.EventKind
+import com.linetra.permissionalerts.data.PermEvent
+import com.linetra.permissionalerts.data.SensitivePermissions
+import com.linetra.permissionalerts.ui.atoms.Glass
+import com.linetra.permissionalerts.ui.atoms.Iris
+import com.linetra.permissionalerts.ui.theme.LocalHolo
+import com.linetra.permissionalerts.ui.theme.Mono
 import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.Calendar

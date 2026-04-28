@@ -1,4 +1,4 @@
-package com.linetra.permalerts.ui.theme
+package com.linetra.permissionalerts.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -13,7 +13,7 @@ import androidx.core.view.WindowCompat
 import android.app.Activity
 
 @Composable
-fun PermWatchTheme(
+fun PermissionAlertsTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit,
 ) {
@@ -64,7 +64,7 @@ fun PermWatchTheme(
     CompositionLocalProvider(LocalHolo provides palette) {
         MaterialTheme(
             colorScheme = scheme,
-            typography = PermWatchTypography,
+            typography = PermissionAlertsTypography,
             content = content,
         )
     }

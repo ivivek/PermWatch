@@ -1,4 +1,4 @@
-package com.linetra.permalerts.ui.atoms
+package com.linetra.permissionalerts.ui.atoms
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -14,7 +14,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.linetra.permalerts.ui.theme.LocalHolo
+import com.linetra.permissionalerts.ui.theme.LocalHolo
 
 @Composable
 fun Glass(

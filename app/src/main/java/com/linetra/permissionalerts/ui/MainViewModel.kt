@@ -1,16 +1,16 @@
-package com.linetra.permalerts.ui
+package com.linetra.permissionalerts.ui
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.linetra.permalerts.data.AlertDiff
-import com.linetra.permalerts.data.InstalledAppPerms
-import com.linetra.permalerts.data.PermEvent
-import com.linetra.permalerts.data.PermsStore
-import com.linetra.permalerts.data.SensitivePermissions
-import com.linetra.permalerts.notify.AlertNotifier
-import com.linetra.permalerts.scanner.PermissionScanner
-import com.linetra.permalerts.worker.ScanScheduler
+import com.linetra.permissionalerts.data.AlertDiff
+import com.linetra.permissionalerts.data.InstalledAppPerms
+import com.linetra.permissionalerts.data.PermEvent
+import com.linetra.permissionalerts.data.PermsStore
+import com.linetra.permissionalerts.data.SensitivePermissions
+import com.linetra.permissionalerts.notify.AlertNotifier
+import com.linetra.permissionalerts.scanner.PermissionScanner
+import com.linetra.permissionalerts.worker.ScanScheduler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow

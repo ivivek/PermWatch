@@ -1,4 +1,4 @@
-package com.linetra.permalerts
+package com.linetra.permissionalerts
 
 import android.Manifest
 import android.content.Intent
@@ -22,13 +22,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import com.linetra.permalerts.ui.AppScaffold
-import com.linetra.permalerts.ui.History
-import com.linetra.permalerts.ui.Intro
-import com.linetra.permalerts.ui.MainViewModel
-import com.linetra.permalerts.ui.Settings
-import com.linetra.permalerts.ui.theme.LocalHolo
-import com.linetra.permalerts.ui.theme.PermWatchTheme
+import com.linetra.permissionalerts.ui.AppScaffold
+import com.linetra.permissionalerts.ui.History
+import com.linetra.permissionalerts.ui.Intro
+import com.linetra.permissionalerts.ui.MainViewModel
+import com.linetra.permissionalerts.ui.Settings
+import com.linetra.permissionalerts.ui.theme.LocalHolo
+import com.linetra.permissionalerts.ui.theme.PermissionAlertsTheme
 
 class MainActivity : ComponentActivity() {
 
@@ -90,7 +90,7 @@ class MainActivity : ComponentActivity() {
         if (savedInstanceState == null) consumeAlertIntent(intent)
         enableEdgeToEdge()
         setContent {
-            PermWatchTheme {
+            PermissionAlertsTheme {
                 val onboarded by vm.onboarded.collectAsState()
                 Box(
                     modifier = Modifier

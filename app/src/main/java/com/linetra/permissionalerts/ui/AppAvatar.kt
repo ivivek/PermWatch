@@ -1,4 +1,4 @@
-package com.linetra.permalerts.ui
+package com.linetra.permissionalerts.ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -23,8 +23,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.graphics.drawable.toBitmap
-import com.linetra.permalerts.ui.theme.HoloPalette
-import com.linetra.permalerts.ui.theme.LocalHolo
+import com.linetra.permissionalerts.ui.theme.HoloPalette
+import com.linetra.permissionalerts.ui.theme.LocalHolo
 
 @Composable
 internal fun AppAvatar(

@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.linetra.permalerts"
+    namespace = "com.linetra.permissionalerts"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.linetra.permalerts"
+        applicationId = "com.linetra.permissionalerts"
         minSdk = 26
         targetSdk = 35
         versionCode = 1

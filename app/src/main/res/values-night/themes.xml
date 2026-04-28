@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.PermWatch" parent="android:Theme.Material.NoActionBar" />
+    <style name="Theme.PermissionAlerts" parent="android:Theme.Material.NoActionBar" />
 </resources>

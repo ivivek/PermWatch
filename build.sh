@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Build script for PermWatch Android app
+# Build script for Permission Alerts Android app
 # Usage: ./build.sh [build|install|release|clean|bundle]
 
 set -e
@@ -57,7 +57,7 @@ case $ACTION in
         ./gradlew installDevDebug
         echo ""
         echo "Launching app..."
-        adb shell am start -n com.linetra.permalerts.dev/com.linetra.permalerts.MainActivity
+        adb shell am start -n com.linetra.permissionalerts.dev/com.linetra.permissionalerts.MainActivity
         ;;
     clean)
         echo "Cleaning build artifacts..."

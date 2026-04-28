@@ -1,4 +1,4 @@
-# PermWatch — design brief
+# Permission Alerts — design brief
 
 Paste this into any AI design tool (v0, Galileo, Figma AI, Uizard, Claude, etc.)
 to generate UI mockups and an app icon. Optionally attach a screenshot of the
@@ -6,7 +6,7 @@ current main screen for baseline context.
 
 ---
 
-**Product:** PermWatch — an Android privacy-watchdog app. It scans every
+**Product:** Permission Alerts — an Android privacy-watchdog app. It scans every
 installed app for *sensitive permissions* it has been granted (microphone,
 camera, contacts, SMS, call log, location, phone, plus special perms like
 accessibility, draw-over-other-apps, all-files storage) and alerts the user
@@ -46,11 +46,11 @@ launcher icon (foreground vector on solid background).
   answers three questions in three concise panels (swipeable carousel or
   single scroll): (1) **What this app does** — "Know the moment any app on
   your phone gets access to your mic, camera, contacts, messages, or
-  location." (2) **How it works** — "PermWatch quietly scans your installed
+  location." (2) **How it works** — "Permission Alerts quietly scans your installed
   apps in the background. If something gains new sensitive access, you get a
   notification. You decide what to do." (3) **What you can do about it** —
   "Tap 'Manage' on any app to jump to its settings and revoke access.
-  PermWatch never revokes permissions itself." End with a single "Get
+  Permission Alerts never revokes permissions itself." End with a single "Get
   started" button that takes the user to the main screen. No permissions,
   no config, no account — the app has already silently baselined the current
   state in the background. Use friendly illustrations or icon-based visuals

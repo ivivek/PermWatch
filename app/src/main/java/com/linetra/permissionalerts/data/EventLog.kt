@@ -1,4 +1,4 @@
-package com.linetra.permalerts.data
+package com.linetra.permissionalerts.data
 
 enum class EventKind { GRANTED, REVOKED }
 

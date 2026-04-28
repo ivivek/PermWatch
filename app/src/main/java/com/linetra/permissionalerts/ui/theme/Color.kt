@@ -1,4 +1,4 @@
-package com.linetra.permalerts.ui.theme
+package com.linetra.permissionalerts.ui.theme
 
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
@@ -57,5 +57,5 @@ val HoloLight = HoloPalette(
 )
 
 val LocalHolo = staticCompositionLocalOf<HoloPalette> {
-    error("HoloPalette not provided — wrap content in PermWatchTheme")
+    error("HoloPalette not provided — wrap content in PermissionAlertsTheme")
 }

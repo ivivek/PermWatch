@@ -19,19 +19,19 @@ Always use `./build.sh` — it sets `JAVA_HOME` (JBR 21) and `ANDROID_HOME`.
 | `./build.sh release` | Release APK (prod flavor) |
 
 Flavors: `dev` (applicationIdSuffix `.dev`) and `prod`. The installed package
-on-device for dev is `com.linetra.permalerts.dev`; Activity launch target is
-`com.linetra.permalerts.MainActivity` (namespace stays flavor-agnostic).
+on-device for dev is `com.linetra.permissionalerts.dev`; Activity launch target is
+`com.linetra.permissionalerts.MainActivity` (namespace stays flavor-agnostic).
 
 Exercise the first-run silent-baseline path via:
 ```
-adb shell pm clear com.linetra.permalerts.dev
+adb shell pm clear com.linetra.permissionalerts.dev
 ```
 
 ## Architecture
 
 ```
-com.linetra.permalerts
-├── PermWatchApp.kt          Application — channel + ScanScheduler.ensureScheduled on startup
+com.linetra.permissionalerts
+├── PermissionAlertsApp.kt          Application — channel + ScanScheduler.ensureScheduled on startup
 ├── MainActivity.kt           Compose single-activity; switches Intro/scaffold on
 │                             vm.onboarded; toggles Settings overlay; onResume
 │                             triggers vm.refresh()
@@ -253,7 +253,7 @@ IBM Plex Mono (regular/medium/bold statics). ~547 KB total.
 
 ## Conventions
 
-- Package namespace: `com.linetra.permalerts` — **not** `com.trogo.*` (see
+- Package namespace: `com.linetra.permissionalerts` — **not** `com.trogo.*` (see
   memory `project_package_namespace`).
 - Code style: `kotlin.code.style=official` (gradle.properties); no comments
   unless the *why* is non-obvious.

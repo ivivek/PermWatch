@@ -1,4 +1,4 @@
-package com.linetra.permalerts.ui
+package com.linetra.permissionalerts.ui
 
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
@@ -39,9 +39,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.linetra.permalerts.ui.atoms.Iris
-import com.linetra.permalerts.ui.theme.LocalHolo
-import com.linetra.permalerts.ui.theme.Mono
+import com.linetra.permissionalerts.ui.atoms.Iris
+import com.linetra.permissionalerts.ui.theme.LocalHolo
+import com.linetra.permissionalerts.ui.theme.Mono
 
 private data class Slide(val kicker: String, val title: String, val body: String)
 

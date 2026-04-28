@@ -1,4 +1,4 @@
-package com.linetra.permalerts.notify
+package com.linetra.permissionalerts.notify
 
 import android.Manifest
 import android.app.NotificationChannel
@@ -13,10 +13,10 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
-import com.linetra.permalerts.MainActivity
-import com.linetra.permalerts.R
-import com.linetra.permalerts.data.FlaggedApp
-import com.linetra.permalerts.data.SensitivePermissions
+import com.linetra.permissionalerts.MainActivity
+import com.linetra.permissionalerts.R
+import com.linetra.permissionalerts.data.FlaggedApp
+import com.linetra.permissionalerts.data.SensitivePermissions
 
 class AlertNotifier(private val context: Context) {
 

@@ -1,13 +1,13 @@
-package com.linetra.permalerts.worker
+package com.linetra.permissionalerts.worker
 
 import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.linetra.permalerts.data.AlertDiff
-import com.linetra.permalerts.data.PermsStore
-import com.linetra.permalerts.data.SensitivePermissions
-import com.linetra.permalerts.notify.AlertNotifier
-import com.linetra.permalerts.scanner.PermissionScanner
+import com.linetra.permissionalerts.data.AlertDiff
+import com.linetra.permissionalerts.data.PermsStore
+import com.linetra.permissionalerts.data.SensitivePermissions
+import com.linetra.permissionalerts.notify.AlertNotifier
+import com.linetra.permissionalerts.scanner.PermissionScanner
 
 class PermissionScanWorker(
     appContext: Context,

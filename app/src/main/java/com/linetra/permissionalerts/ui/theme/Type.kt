@@ -1,4 +1,4 @@
-package com.linetra.permalerts.ui.theme
+package com.linetra.permissionalerts.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.ExperimentalTextApi
@@ -8,7 +8,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import com.linetra.permalerts.R
+import com.linetra.permissionalerts.R
 
 @OptIn(ExperimentalTextApi::class)
 private val SpaceGrotesk = FontFamily(
@@ -27,7 +27,7 @@ val PlexMono = FontFamily(
 val Display = SpaceGrotesk
 val Mono = PlexMono
 
-val PermWatchTypography = Typography(
+val PermissionAlertsTypography = Typography(
     displayLarge   = TextStyle(fontFamily = Display, fontWeight = FontWeight.Medium,  fontSize = 32.sp, lineHeight = 36.sp, letterSpacing = (-0.5).sp),
     headlineMedium = TextStyle(fontFamily = Display, fontWeight = FontWeight.Medium,  fontSize = 24.sp, lineHeight = 28.sp, letterSpacing = (-0.3).sp),
     titleLarge     = TextStyle(fontFamily = Display, fontWeight = FontWeight.Medium,  fontSize = 20.sp, lineHeight = 24.sp, letterSpacing = (-0.2).sp),

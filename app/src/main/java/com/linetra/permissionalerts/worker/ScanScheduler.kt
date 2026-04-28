@@ -1,4 +1,4 @@
-package com.linetra.permalerts.worker
+package com.linetra.permissionalerts.worker
 
 import android.content.Context
 import androidx.work.ExistingWorkPolicy
