@@ -7,6 +7,17 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
+    <!--
+      Pulled in by androidx.work but unused: we set no network constraints and
+      our worker is plain CoroutineWorker (no setForeground / no expedited
+      path). Strip them so the Play listing reflects what the app actually
+      uses. Re-enable if either feature is added later.
+    -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"
+        tools:node="remove" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"
+        tools:node="remove" />
+
     <application
         android:name=".PermissionAlertsApp"
         android:allowBackup="false"
