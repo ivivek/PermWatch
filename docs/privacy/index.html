@@ -116,7 +116,7 @@
   <p>It uses standard Android APIs (<code>PackageManager</code>, <code>AppOpsManager</code>, <code>Settings.Secure</code>) for all of this. It never reads file contents, messages, contacts, photos, location, or anything from <em>inside</em> the apps it inspects — only the fact that the OS has granted them a permission.</p>
 
   <h2>Where your data is stored</h2>
-  <p>In a single Android Jetpack DataStore file inside Permission Alerts' own private storage area. The Android operating system prevents other apps from reading this. It contains:</p>
+  <p><strong>Locally on your device — and only there. No server, no cloud.</strong> Specifically: in a single Android Jetpack DataStore file inside Permission Alerts' own private storage area. The Android operating system prevents other apps from reading this. It contains:</p>
   <ul>
     <li>A baseline snapshot — which app had which sensitive permissions when you activated the app.</li>
     <li>Your "ignore" list — apps you've muted.</li>
