@@ -234,7 +234,7 @@ flips the palette; same components, no branching downstream.
 Voice: "Signal · since baseline" / "N apps have new access" / "Accept"
 + "Accept all" / "Watching" / "Ignored".
 
-Prototype source-of-truth at `/opt/dev/PermWatch/`:
+Prototype source-of-truth at `/opt/dev/android-permission-alerts-ui/`:
 - `PermWatch v2.jsx` — dark, what HoloDark is derived from.
 - `PermWatch v2 Light.jsx` — light, what HoloLight is derived from.
 - `Moodboard.html` / `Moodboard v2.html` — alternative directions explored

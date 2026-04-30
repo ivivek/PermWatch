@@ -98,7 +98,7 @@ Permission Alerts does **not** request any of the sensitive permissions it watch
 Source: [`docs/privacy/index.html`](./docs/privacy/index.html). Once GitHub
 Pages is enabled for this repo (Settings → Pages → Deploy from branch: `main`,
 folder: `/docs`), it's served at
-<https://ivivek.github.io/PermWatch/privacy/>.
+<https://ivivek.github.io/android-permission-alerts/privacy/>.
 
 ## License
 
