@@ -70,6 +70,16 @@ To exercise the first-run silent-baseline path:
 adb shell pm clear com.linetra.permissionalerts.dev
 ```
 
+## Release signing (Play Store)
+
+`./build.sh release` and `./build.sh bundle` produce a signed artifact only if
+a `keystore.properties` file exists at the repo root. Copy
+[`keystore.properties.example`](./keystore.properties.example) to
+`keystore.properties` (gitignored), generate the upload keystore per the
+comment block in that file, and fill in the four values. Without it, release
+builds still compile but are unsigned (useful for proguard/size testing
+locally; not uploadable to Play).
+
 ## Permissions Permission Alerts itself requests
 
 - `QUERY_ALL_PACKAGES` — required on API 30+ to enumerate other apps' permission
