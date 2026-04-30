@@ -12,6 +12,10 @@ val keystoreProperties = Properties().apply {
     if (hasReleaseKeystore) keystorePropertiesFile.inputStream().use { load(it) }
 }
 
+val gitVersionCode: Int = providers.exec {
+    commandLine("git", "rev-list", "--count", "HEAD")
+}.standardOutput.asText.get().trim().toInt()
+
 android {
     namespace = "com.linetra.permissionalerts"
     compileSdk = 35
@@ -20,7 +24,7 @@ android {
         applicationId = "com.linetra.permissionalerts"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
+        versionCode = gitVersionCode
         versionName = "0.1.0"
     }
 
